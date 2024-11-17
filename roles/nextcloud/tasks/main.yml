@@ -41,6 +41,19 @@
         pull: true
         volumes:
           - "{{ nextcloud_data_directory }}/nextcloud:/var/www/html:rw"
+          - "{{ downloads_root }}:/downloads:rw"
+          - "{{ movies_root }}:/movies:rw"
+          - "{{ tv_root }}:/tv:rw"
+          - "{{ torrents_root }}:/torrents:rw"
+          - "{{ music_root }}:/music:rw"
+#          - "{{ podcasts_root }}:/podcasts:rw"
+          - "{{ books_root }}:/books:rw"
+#          - "{{ audiobooks_root }}:/audiobooks:rw"
+#          - "{{ comics_root }}:/comics:rw"
+          - "{{ photos_root }}:/photos:rw"
+          - "{{ documents_root }}:/documents:rw"
+          - "{{ code_root }}:/code:rw"
+#          - "{{ roms_root }}:/roms:rw"
         ports:
           - "{{ nextcloud_port }}:80"
         env:
@@ -49,6 +62,7 @@
           MYSQL_USER: "{{ nextcloud_sql_user }}"
           MYSQL_PASSWORD: "{{ nextcloud_sql_password }}"
           NEXTCLOUD_TRUSTED_DOMAINS: "{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
+          OVERWRITEPROTOCOL: "https"
         restart_policy: unless-stopped
         memory: "{{ nextcloud_memory }}"
         labels:
