@@ -1,8 +1,8 @@
 ---
-ansible_nas_user: david
+ # ansible_nas_user: "{{ ansible_nas_user}}"
 
 # Where you want to store application data - you'll likely want this backed up or on a ZFS zpool.
-docker_home: /mnt/Volume2/docker
+# docker_home: "{{ ansible_nas_docker_volume }}"
 
 # Where you want Docker to store images
 # Keep this on a fast disk, ideally an SSD. It doesn't need to be backed up.
