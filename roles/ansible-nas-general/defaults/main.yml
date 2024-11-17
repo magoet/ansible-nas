@@ -1,9 +1,6 @@
 ---
-# Sets the hostname of your Ansible NAS
-ansible_nas_hostname: ansible-nas
-
 # Update all apt packages when playbook is run
-keep_packages_updated: false
+keep_packages_updated: true
 
 # Extra packages to install
 ansible_nas_extra_packages:
@@ -14,7 +11,3 @@ ansible_nas_extra_packages:
   - unzip
   - lm-sensors
   - ctop
-
-# Sets the timezone for your Ansible NAS
-# You can find a list here https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-ansible_nas_timezone: Etc/UTC
