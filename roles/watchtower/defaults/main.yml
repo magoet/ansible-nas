@@ -19,6 +19,12 @@ watchtower_command: "--schedule '{{ watchtower_cron_schedule }}'"
 # specs
 watchtower_memory: 1g
 
+# Sets the Watchtower cleanup flag. This will remove old images after an update.
+watchtower_cleanup: true
+# Sets the Watchtower remove volumes flag. This will remove anonymous volumes associated with a container when it is removed.
+watchtower_remove_volumes: false
+
+# Watchtower container settings
 watchtower_container_name: "watchtower"
 watchtower_image_name: "containrrr/watchtower"
 watchtower_image_version: "latest"
