@@ -10,6 +10,7 @@
   ansible.builtin.pip:
     name: docker-py
     state: absent
+    break_system_packages: true
   register: result
   until: result is succeeded
 
@@ -17,6 +18,7 @@
   ansible.builtin.pip:
     name: docker
     state: present
+    break_system_packages: true
   register: result
   until: result is succeeded
 
