@@ -50,10 +50,13 @@
           - "{{ books_root }}:/books:rw"
 #          - "{{ audiobooks_root }}:/audiobooks:rw"
 #          - "{{ comics_root }}:/comics:rw"
+          - "{{ games_root }}:/games:rw"
           - "{{ photos_root }}:/photos:rw"
           - "{{ documents_root }}:/documents:rw"
+#          - "{{ dump_root }}:/dump:rw"
           - "{{ code_root }}:/code:rw"
 #          - "{{ roms_root }}:/roms:rw"
+#          - "{{ recordings_root }}:/recordings:rw"
         ports:
           - "{{ nextcloud_port }}:80"
         env:
