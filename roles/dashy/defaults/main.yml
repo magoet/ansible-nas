@@ -4,13 +4,14 @@ dashy_available_externally: false
 
 # directories
 dashy_data_directory: "{{ docker_home }}/dashy"
+dashy_icon_directory: "{{ dashy_data_directory }}/icons"
 
 # network
 dashy_port: "8082"
 dashy_hostname: "dashy"
 
 # specs
-dashy_memory: 1g
+dashy_memory: 2g
 
 # docker
 dashy_container_name: dashy
