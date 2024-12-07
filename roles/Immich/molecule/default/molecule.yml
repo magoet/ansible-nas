@@ -1,0 +1,7 @@
+---
+provisioner:
+  inventory:
+    group_vars:
+      all:
+        immich_enabled: true
+        immich_install_power_tools: true
