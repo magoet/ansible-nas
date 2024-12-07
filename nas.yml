@@ -193,6 +193,10 @@
       tags:
         - homepage
 
+    - role: immich
+      tags:
+        - immich
+
     - role: ispyagentdvr
       tags:
         - ispyagentdvr
