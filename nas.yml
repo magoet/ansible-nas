@@ -61,6 +61,10 @@
       tags:
         - apcupsd
 
+    - role: authentik
+      tags:
+        - authentik    
+
     - role: bazarr
       tags:
         - bazarr
