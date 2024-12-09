@@ -123,7 +123,7 @@
           homepage.group: "Security"
           homepage.name: "Authentik"
           homepage.icon: "authentik"
-          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ authentik_https_port }}"
+          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ authentik_http_port }}"
         restart_policy: unless-stopped
         memory: "{{ authentik_server_memory }}"
 
