@@ -18,7 +18,7 @@
     - name: Create paperless_ngx redis broker
       docker_container:
         name: "{{ paperless_ngx_container_name_redis }}"
-        image: redis:7.0
+        image: redis:latest
         pull: true
         restart_policy: unless-stopped
         memory: "{{ paperless_ngx_redis_memory }}"
