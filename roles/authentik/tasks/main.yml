@@ -12,8 +12,6 @@
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        owner: "1000"
-        group: "1000"
         mode: 0755
       with_items:
         - "{{ authentik_data_directory }}/database"
@@ -39,8 +37,6 @@
           POSTGRES_PASSWORD: "{{ authentik_pg_pass }}"
           POSTGRES_USER: "{{ authentik_pg_user }}"
           POSTGRES_DB: "{{ authentik_pg_db }}"
-        labels:
-          traefik.enable: "false"
         restart_policy: unless-stopped
         memory: "{{ authentik_database_memory }}"
         healthcheck:
@@ -60,8 +56,6 @@
           - "{{ authentik_data_directory }}/redis:/data:rw"
         networks:
           - name: "{{ authentik_network_name }}"
-        labels:
-          traefik.enable: "false"
         restart_policy: unless-stopped
         memory: "{{ authentik_redis_memory }}"
         healthcheck:
@@ -92,19 +86,19 @@
           AUTHENTIK_POSTGRESQL__NAME: "{{ authentik_pg_db }}"
           AUTHENTIK_POSTGRESQL__PASSWORD: "{{ authentik_pg_pass }}"
           AUTHENTIK_ERROR_REPORTING__ENABLED: "{{ authentik_error_reporting | string }}"
-          # SMTP Host Emails are sent to
-          AUTHENTIK_EMAIL__HOST: "{{ authentik_email_host }}"
-          AUTHENTIK_EMAIL__PORT: "{{ authentik_email_port }}"
-          # Optionally authenticate (don't add quotation marks to you password)
-          AUTHENTIK_EMAIL__USERNAME: "{{ authentik_email_username }}"
-          AUTHENTIK_EMAIL__PASSWORD: "{{ authentik_email_password }}"
-          # Use StartTLS
-          AUTHENTIK_EMAIL__USE_TLS: "{{ authentik_email_use_tls }}"
-          # Use SSL
-          AUTHENTIK_EMAIL__USE_SSL: "{{ authentik_email_use_ssl }}"
-          AUTHENTIK_EMAIL__TIMEOUT: "{{ authentik_email_timeout }}"
-          # Email address authentik will send from, should have a correct @domain
-          AUTHENTIK_EMAIL__FROM: "{{ authentik_email_from }}"
+          # # SMTP Host Emails are sent to
+          # AUTHENTIK_EMAIL__HOST: "{{ authentik_email_host }}"
+          # AUTHENTIK_EMAIL__PORT: "{{ authentik_email_port }}"
+          # # Optionally authenticate (don't add quotation marks to you password)
+          # AUTHENTIK_EMAIL__USERNAME: "{{ authentik_email_username }}"
+          # AUTHENTIK_EMAIL__PASSWORD: "{{ authentik_email_password }}"
+          # # Use StartTLS
+          # AUTHENTIK_EMAIL__USE_TLS: "{{ authentik_email_use_tls }}"
+          # # Use SSL
+          # AUTHENTIK_EMAIL__USE_SSL: "{{ authentik_email_use_ssl }}"
+          # AUTHENTIK_EMAIL__TIMEOUT: "{{ authentik_email_timeout }}"
+          # # Email address authentik will send from, should have a correct @domain
+          # AUTHENTIK_EMAIL__FROM: "{{ authentik_email_from }}"
           # WORKERS: 2
           AUTHENTIK_SECRET_KEY: "{{ authentik_secret_key }}"
           AUTHENTIK_DISABLE_UPDATE_CHECK: "{{ authentik_disable_update_check | string }}"
@@ -147,19 +141,22 @@
           AUTHENTIK_POSTGRESQL__NAME: "{{ authentik_pg_db }}"
           AUTHENTIK_POSTGRESQL__PASSWORD: "{{ authentik_pg_pass }}"
           AUTHENTIK_ERROR_REPORTING__ENABLED: "{{ authentik_error_reporting | string }}"
-          # SMTP Host Emails are sent to
-          AUTHENTIK_EMAIL__HOST: "{{ authentik_email_host }}"
-          AUTHENTIK_EMAIL__PORT: "{{ authentik_email_port }}"
-          # Optionally authenticate (don't add quotation marks to you password)
-          AUTHENTIK_EMAIL__USERNAME: "{{ authentik_email_username }}"
-          AUTHENTIK_EMAIL__PASSWORD: "{{ authentik_email_password }}"
-          # Use StartTLS
-          AUTHENTIK_EMAIL__USE_TLS: "{{ authentik_email_use_tls }}"
-          # Use SSL
-          AUTHENTIK_EMAIL__USE_SSL: "{{ authentik_email_use_ssl }}"
-          AUTHENTIK_EMAIL__TIMEOUT: "{{ authentik_email_timeout }}"
-          # Email address authentik will send from, should have a correct @domain
-          AUTHENTIK_EMAIL__FROM: "{{ authentik_email_from }}"
+          AUTHENTIK_BOOTSTRAP_PASSWORD: "{{ authentik_bootstrap_pass }}"
+          AUTHENTIK_BOOTSTRAP_TOKEN: "{{ authentik_bootstrap_tok }}"
+          AUTHENTIK_BOOTSTRAP_EMAIL: "{{ ansible_nas_email }}"
+          # # SMTP Host Emails are sent to
+          # AUTHENTIK_EMAIL__HOST: "{{ authentik_email_host }}"
+          # AUTHENTIK_EMAIL__PORT: "{{ authentik_email_port }}"
+          # # Optionally authenticate (don't add quotation marks to you password)
+          # AUTHENTIK_EMAIL__USERNAME: "{{ authentik_email_username }}"
+          # AUTHENTIK_EMAIL__PASSWORD: "{{ authentik_email_password }}"
+          # # Use StartTLS
+          # AUTHENTIK_EMAIL__USE_TLS: "{{ authentik_email_use_tls }}"
+          # # Use SSL
+          # AUTHENTIK_EMAIL__USE_SSL: "{{ authentik_email_use_ssl }}"
+          # AUTHENTIK_EMAIL__TIMEOUT: "{{ authentik_email_timeout }}"
+          # # Email address authentik will send from, should have a correct @domain
+          # AUTHENTIK_EMAIL__FROM: "{{ authentik_email_from }}"
           # WORKERS: 2
           AUTHENTIK_SECRET_KEY: "{{ authentik_secret_key }}"
         # `user: root` and the docker socket volume are optional.
@@ -169,8 +166,6 @@
         # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
         # (1000:1000 by default)
         user: root
-        labels:
-          traefik.enable: "false"
         restart_policy: unless-stopped
         memory: "{{ authentik_worker_memory }}"
   when: authentik_enabled is true

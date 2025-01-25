@@ -27,28 +27,25 @@ authentik_server_image_tag: "latest"
 authentik_worker_image_name: "ghcr.io/goauthentik/server"
 authentik_worker_image_tag: "latest"
 authentik_database_image_name: "docker.io/library/postgres"
-authentik_database_image_tag: "12-alpine"
+authentik_database_image_tag: "alpine"
 authentik_redis_image_name: "docker.io/library/redis"
 authentik_redis_image_tag: "alpine"
 authentik_user_id: "1000"
 authentik_group_id: "1000"
 
 # database
-authentik_pg_pass: "password" # $(pwgen -s 40 1)
-authentik_pg_user: "authentik"
 authentik_pg_db: "authentik"
 
 # authentik
-authentik_secret_key: "secret"  # $(pwgen -s 50 1)
 authentik_error_reporting: true
-authentik_email_host: "localhost"
-authentik_email_port: "25"
-authentik_email_username: ""
-authentik_email_password: ""
-authentik_email_use_tls: "false"
-authentik_email_use_ssl: "false"
-authentik_email_timeout: "10"
-authentik_email_from: "authentik@{{ ansible_nas_domain }}"
+# authentik_email_host: "localhost"
+# authentik_email_port: "25"
+# authentik_email_username: ""
+# authentik_email_password: ""
+# authentik_email_use_tls: "false"
+# authentik_email_use_ssl: "false"
+# authentik_email_timeout: "10"
+# authentik_email_from: "authentik@{{ ansible_nas_domain }}"
 authentik_disable_update_check: true
 authentik_disable_startup_analytics: true
 authentik_avatars: "gravatar"
