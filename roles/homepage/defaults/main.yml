@@ -19,37 +19,120 @@ homepage_image_tag: "latest"
 homepage_memory: "1g"
 
 # settings
-homepage_title: Ansible-NAS Homepage
-homepage_locale: en-GB
+homepage_title: "{{ ansible_nas_hostname }}"
+homepage_locale: "{{ ansible_nas_locale }}"
 
 # Homepage config files - the variables below are formatted to Homepage YAML config files
 homepage_settings_yaml:
+  headerStyle: clean
   title: "{{ homepage_title }}"
   language: "{{ homepage_locale }}"
   showStats: true
+  hideErrors: true
+  layout:
+    Networking:
+      tab: Snerver
+      style: row
+      columns: 4
+      useEqualHeights: true
+    Media:
+      tab: Snerver
+      style: row
+      columns: 4
+      useEqualHeights: true
+    Download Tools:
+      tab: Snerver
+      style: row
+      columns: 4
+      useEqualHeights: true
+    Finance:
+      tab: Snerver
+      style: row
+      columns: 4
+      useEqualHeights: true
+    "System":
+      tab: Snerver
+      style: row
+      columns: 4
+      useEqualHeights: true
 
 homepage_services_yaml:
   - Networking:
       - Router:
-          icon: asus-router
-          href: http://192.168.1.1/
-          description: Asus Router
+          icon: avmfritzbox.png
+          href: http://192.168.1.1
+          description: Fritzbox 7530
+          widget:
+            type: fritzbox
+            url: http://192.168.178.1
+            fields: ["connectionStatus", "upTime", "maxDown", "maxUp", "down", "up", "received", "sent", "externalIPAddress"]
+  - Monitoring:
+      - Info:
+          widget:
+            type: glances
+            url: http://192.168.178.37:61208
+            version: 4 # required only if running glances v4 or higher, defaults to 3
+            metric: info
+      - CPU Usage:
+          widget:
+            type: glances
+            url: http://192.168.178.37:61208
+            version: 4 # required only if running glances v4 or higher, defaults to 3
+            metric: cpu
+      - Memory Usage:
+          widget:
+            type: glances
+            url: http://192.168.178.37:61208
+            version: 4 # required only if running glances v4 or higher, defaults to 3
+            metric: memory
+
+  # - Test Iframe:
+  #     - Iframe:
+  #           widget:
+  #             type: iframe
+  #             name: myIframe
+  #             src: https://www.example.com/
+              # classes: h-60 sm:h-60 md:h-60 lg:h-60 xl:h-60 2xl:h-72 # optional, use tailwind height classes, see https://tailwindcss.com/docs/height
+              # referrerPolicy: same-origin # optional, no default
+              # allowPolicy: autoplay fullscreen gamepad # optional, no default
+              # allowFullscreen: false # optional, default: true
+              # loadingStrategy: eager # optional, default: eager
+              # allowScrolling: no # optional, default: yes
+              # refreshInterval: 2000 # optional, no default
+              # showHeader: true # optional, default: true
 
 homepage_widgets_yaml:
   - search:
-      provider: google # google, duckduckgo, bing, baidu, brave or custom
+      provider: custom # google, duckduckgo, bing, baidu, brave or custom
+      url: https://www.startpage.com/do/dsearch?q=
+      #suggestionUrl: https://www.startpage.com/osuggestions?q=%s
+      #showSearchSuggestions: true
       focus: true # Optional, will set focus to the search bar on page load
       target: _blank # One of _self, _blank, _parent or _top
-  - greeting:
-      text_size: xl
-      text: Ansible-NAS
-  - resources:
-      cpu: true
-      memory: true
-      cputemp: true
-      uptime: true
-      units: metric # only used by cpu temp
-      refresh: 60000 # optional, in ms
+  # - greeting:
+  #     text_size: xl
+  #     text: Snerver
+  # - resources:
+  #     cpu: true
+  #     memory: true
+  #     cputemp: true
+  #     uptime: true
+  #     units: metric # only used by cpu temp
+  #     refresh: 60000 # optional, in ms
+  # - datetime:
+  #   text_size: xl
+  #   locale: "{{ homepage_locale }}"
+  #   format:
+  #     timeStyle: short
+  #     hourCycle: h23
+  - openmeteo:
+      latitude: "{{ 51.05434 }}"
+      longitude: "{{ 3.717424 }}"
+      timezone: "{{ansible_nas_timezone }}" # optional
+      units: metric # or imperial
+      cache: 30 # Time in minutes to cache API responses, to stay within limits
+      format: # optional, Intl.NumberFormat options
+        maximumFractionDigits: 1
 
 homepage_bookmarks_yaml:
   - Developer:
