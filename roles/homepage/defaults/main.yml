@@ -60,29 +60,29 @@ homepage_services_yaml:
   - Networking:
       - Router:
           icon: avmfritzbox.png
-          href: http://192.168.1.1
+          href: "{{ ipv4_gateway }}"
           description: Fritzbox 7530
           widget:
             type: fritzbox
-            url: http://192.168.178.1
+            url: "{{ ipv4_gateway }}"
             fields: ["connectionStatus", "upTime", "maxDown", "maxUp", "down", "up", "received", "sent", "externalIPAddress"]
   - Monitoring:
       - Info:
           widget:
             type: glances
-            url: http://192.168.178.37:61208
+            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
             version: 4 # required only if running glances v4 or higher, defaults to 3
             metric: info
       - CPU Usage:
           widget:
             type: glances
-            url: http://192.168.178.37:61208
+            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
             version: 4 # required only if running glances v4 or higher, defaults to 3
             metric: cpu
       - Memory Usage:
           widget:
             type: glances
-            url: http://192.168.178.37:61208
+            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
             version: 4 # required only if running glances v4 or higher, defaults to 3
             metric: memory
 
@@ -126,8 +126,8 @@ homepage_widgets_yaml:
   #     timeStyle: short
   #     hourCycle: h23
   - openmeteo:
-      latitude: "{{ 51.05434 }}"
-      longitude: "{{ 3.717424 }}"
+      latitude: "{{ ansible_nas_latitude }}"
+      longitude: "{{ ansible_nas_longitude }}"
       timezone: "{{ansible_nas_timezone }}" # optional
       units: metric # or imperial
       cache: 30 # Time in minutes to cache API responses, to stay within limits
