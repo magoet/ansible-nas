@@ -40,7 +40,10 @@
         network_mode: "{{ nextcloud_network_name }}"
         pull: true
         volumes:
-          - "{{ nextcloud_data_directory }}/nextcloud:/var/www/html:rw"
+          - "{{ nextcloud_data_directory }}/nextcloud/custom_apps:/var/www/html/custom_apps:rw"
+          - "{{ nextcloud_data_directory }}/nextcloud/config:/var/www/html/config:rw"
+          - "{{ nextcloud_storage_directory }}:/var/www/html/data:rw"
+          - "{{ nextcloud_data_directory }}/nextcloud/themes:/var/www/html/themes:rw"
           - "{{ downloads_root }}:/downloads:rw"
           - "{{ movies_root }}:/movies:rw"
           - "{{ tv_root }}:/tv:rw"
@@ -50,10 +53,13 @@
           - "{{ books_root }}:/books:rw"
 #          - "{{ audiobooks_root }}:/audiobooks:rw"
 #          - "{{ comics_root }}:/comics:rw"
+          - "{{ games_root }}:/games:rw"
           - "{{ photos_root }}:/photos:rw"
           - "{{ documents_root }}:/documents:rw"
+#          - "{{ dump_root }}:/dump:rw"
           - "{{ code_root }}:/code:rw"
 #          - "{{ roms_root }}:/roms:rw"
+#          - "{{ recordings_root }}:/recordings:rw"
         ports:
           - "{{ nextcloud_port }}:80"
         env:

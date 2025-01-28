@@ -16,10 +16,10 @@
         - samba
         - skip_ansible_lint
 
-    - role: geerlingguy.nfs
-      tags:
-        - nfs
-        - skip_ansible_lint
+    # - role: geerlingguy.nfs
+    #   tags:
+    #     - nfs
+    #     - skip_ansible_lint
 
     - role: geerlingguy.docker
       vars:
@@ -60,6 +60,10 @@
     - role: apcupsd
       tags:
         - apcupsd
+
+    - role: authentik
+      tags:
+        - authentik    
 
     - role: bazarr
       tags:
@@ -193,6 +197,10 @@
       tags:
         - homepage
 
+    - role: immich
+      tags:
+        - immich
+
     - role: ispyagentdvr
       tags:
         - ispyagentdvr
@@ -316,6 +324,10 @@
     - role: paperless_ng
       tags:
         - paperless_ng
+
+    - role: paperless_ngx
+      tags:
+        - paperless_ngx
 
     - role: piwigo
       tags:

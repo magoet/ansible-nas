@@ -7,4 +7,5 @@
       ansible.builtin.include_role:
         name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
       vars:
-        firefly_enabled: false
+        immich_enabled: false
+        immich_install_power_tools: false

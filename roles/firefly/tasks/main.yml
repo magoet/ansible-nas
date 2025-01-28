@@ -10,20 +10,29 @@
         - "{{ firefly_data_directory }}/upload"
         - "{{ firefly_data_directory }}/export"
 
+    - name: Create Firefly network
+      community.docker.docker_network:
+        name: "{{ firefly_network_name }}"
+
     - name: Create MySQL container for Firefly
       community.docker.docker_container:
         name: "{{ firefly_mysql_container_name }}"
-        image: mariadb:10.9
+        image: "{{ firefly_mysql_image_name }}:{{ firefly_mysql_image_tag }}"
+        networks:
+          - name: "{{ firefly_network_name }}"
+        network_mode: "{{ firefly_network_name }}"
         pull: true
         volumes:
           - "{{ firefly_data_directory }}/mariadb:/var/lib/mysql:rw"
         env:
-          MYSQL_DATABASE: "firefly"
-          MYSQL_USER: "firefly"
-          MYSQL_PASSWORD: "firefly"
-          MYSQL_ROOT_PASSWORD: "firefly"
+          MYSQL_DATABASE: "{{ firefly_mysql_database }}"
+          MYSQL_USER: "{{ firefly_mysql_user }}"
+          MYSQL_PASSWORD: "{{ firefly_mysql_password }}"
+          MYSQL_ROOT_PASSWORD: "{{ firefly_mysql_root_password }}"
         restart_policy: unless-stopped
         memory: "{{ firefly_mysql_memory }}"
+        labels:
+          traefik.enable: "false"
 
     - name: Wait for MySQL to init
       ansible.builtin.pause:
@@ -32,26 +41,17 @@
     - name: Create Firefly III container
       community.docker.docker_container:
         name: "{{ firefly_container_name }}"
-        image: fireflyiii/core:latest
+        image: "{{ firefly_image_name }}:{{ firefly_image_tag }}"
+        networks:
+          - name: "{{ firefly_network_name }}"
+        network_mode: "{{ firefly_network_name }}"
         pull: true
         volumes:
           - "{{ firefly_data_directory }}/export:/var/www/firefly-iii/storage/export:rw"
           - "{{ firefly_data_directory }}/upload:/var/www/firefly-iii/storage/upload:rw"
-        links:
-          - firefly-mysql:db
         ports:
           - "{{ firefly_port }}:8080"
-        env:
-          APP_URL: "https://{{ firefly_hostname }}.{{ ansible_nas_domain }}"
-          TRUSTED_PROXIES: "**"
-          APP_ENV: "local"
-          APP_KEY: "S0m3R@nd0mString0f32Ch@rsEx@ct1y"
-          DB_CONNECTION: "mysql"
-          DB_HOST: "db"
-          DB_DATABASE: "firefly"
-          DB_USERNAME: "firefly"
-          DB_PASSWORD: "firefly"
-          TZ: "{{ ansible_nas_timezone }}"
+        env: "{{ firefly_optional_env | default({}) | combine(firefly_env) }}"
         restart_policy: unless-stopped
         memory: "{{ firefly_memory }}"
         labels:
@@ -61,6 +61,86 @@
           traefik.http.routers.firefly.tls.domains[0].main: "{{ ansible_nas_domain }}"
           traefik.http.routers.firefly.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
           traefik.http.services.firefly.loadbalancer.server.port: "8080"
+          homepage.group: "Finance"
+          homepage.name: "Firefly III"
+          homepage.icon: "firefly"
+          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ firefly_port }}"
+
+    - name: Create Firefly III Data Importer container
+      community.docker.docker_container:
+        name: "{{ firefly_importer_container_name }}"
+        image: "{{ firefly_importer_image_name }}:{{ firefly_importer_image_tag }}"
+        networks:
+          - name: "{{ firefly_network_name }}"
+        network_mode: "{{ firefly_network_name }}"
+        pull: true
+        volumes:
+          - "{{ firefly_data_directory }}/export:/var/www/firefly-iii/storage/export:rw"
+          - "{{ firefly_data_directory }}/upload:/var/www/firefly-iii/storage/upload:rw"
+        ports:
+          - "{{ firefly_importer_port }}:8080"
+        env: "{{ firefly_optional_env | default({}) | combine(firefly_env) | combine(firefly_importer_env) }}"
+        restart_policy: unless-stopped
+        memory: "{{ firefly_importer_memory }}"
+        labels:
+          traefik.enable: "{{ firefly_available_externally | string }}"
+          traefik.http.routers.firefly-importer.rule: "Host(`{{ firefly_importer_hostname }}.{{ ansible_nas_domain }}`)"
+          traefik.http.routers.firefly-importer.tls.certresolver: "letsencrypt"
+          traefik.http.routers.firefly-importer.tls.domains[0].main: "{{ ansible_nas_domain }}"
+          traefik.http.routers.firefly-importer.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
+          traefik.http.services.firefly-importer.loadbalancer.server.port: "8080"
+          homepage.group: "Finance"
+          homepage.name: "Firefly III Importer"
+          homepage.icon: "firefly"
+          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ firefly_importer_port }}"
+      when: firefly_importer_enabled is true
+
+    - name: Install Firefly Pico
+      block:
+        - name: Create Firefly III Pico Db container
+          community.docker.docker_container:
+            name: "{{ firefly_pico_db_container_name }}"
+            image: "{{ firefly_pico_db_image_name }}:{{ firefly_pico_db_image_tag }}"
+            networks:
+              - name: "{{ firefly_network_name }}"
+            network_mode: "{{ firefly_network_name }}"
+            pull: true
+            volumes:
+              - "{{ firefly_data_directory }}/pico-db:/var/lib/postgresql/data:rw"
+            env:
+              POSTGRES_DB: "{{ firefly_pico_db_database }}"
+              POSTGRES_USER: "{{ firefly_pico_db_user }}"
+              POSTGRES_PASSWORD: "{{ firefly_pico_db_password }}"
+            restart_policy: unless-stopped
+            memory: "{{ firefly_pico_db_memory }}"
+            labels:
+              traefik.enable: "false"
+
+        - name: Create Firefly III Pico container
+          community.docker.docker_container:
+            name: "{{ firefly_pico_container_name }}"
+            image: "{{ firefly_pico_image_name }}:{{ firefly_pico_image_tag }}"
+            networks:
+              - name: "{{ firefly_network_name }}"
+            network_mode: "{{ firefly_network_name }}"
+            pull: true
+            ports:
+              - "{{ firefly_pico_port }}:80"
+            env: "{{ firefly_pico_optional_env | default({}) | combine(firefly_pico_env) }}"
+            restart_policy: unless-stopped
+            memory: "{{ firefly_pico_memory }}"
+            labels:
+              traefik.enable: "{{ firefly_available_externally | string }}"
+              traefik.http.routers.firefly-pico.rule: "Host(`{{ firefly_pico_hostname }}.{{ ansible_nas_domain }}`)"
+              traefik.http.routers.firefly-pico.tls.certresolver: "letsencrypt"
+              traefik.http.routers.firefly-pico.tls.domains[0].main: "{{ ansible_nas_domain }}"
+              traefik.http.routers.firefly-pico.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
+              traefik.http.services.firefly-pico.loadbalancer.server.port: "80"
+              homepage.group: "Finance"
+              homepage.name: "Firefly Pico"
+              homepage.icon: "firefly"
+              homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ firefly_pico_port }}"
+      when: firefly_pico_enabled is true
   when: firefly_enabled is true
 
 - name: Stop Firefly
@@ -73,5 +153,20 @@
     - name: Stop Firefly MySQL
       community.docker.docker_container:
         name: "{{ firefly_mysql_container_name }}"
+        state: absent
+
+    - name: Stop Firefly Data Importer
+      community.docker.docker_container:
+        name: "{{ firefly_importer_container_name }}"
+        state: absent
+
+    - name: Stop Firefly Pico Db
+      community.docker.docker_container:
+        name: "{{ firefly_pico_db_container_name }}"
+        state: absent
+
+    - name: Stop Firefly Pico
+      community.docker.docker_container:
+        name: "{{ firefly_pico_container_name }}"
         state: absent
   when: firefly_enabled is false
