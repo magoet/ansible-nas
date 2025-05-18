@@ -1,6 +1,6 @@
 ---
 authentik_enabled: false
-authentik_available_externally: false
+authentik_available_externally: true
 
 # directories
 authentik_data_directory: "{{ docker_home }}/authentik"
