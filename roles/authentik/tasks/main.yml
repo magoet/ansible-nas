@@ -75,8 +75,8 @@
           - "{{ authentik_data_directory }}/media:/media:rw"
           - "{{ authentik_data_directory }}/custom-templates:/templates:rw"
         ports:
-          - "{{ authentik_http_port }}:9000"
-          - "{{ authentik_https_port }}:9443"
+#          - "{{ authentik_http_port }}:9000"
+#          - "{{ authentik_https_port }}:9443"
         networks:
           - name: "{{ authentik_network_name }}"
         env:
@@ -108,16 +108,16 @@
           traefik.enable: "{{ authentik_available_externally | string }}"
           traefik.http.routers.authentik.rule: "Host(`{{ authentik_hostname }}.{{ ansible_nas_domain }}`)"
           traefik.http.routers.authentik.tls.certresolver: "letsencrypt"
-          #traefik.http.routers.authentik.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          #traefik.http.routers.authentik.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
+          traefik.http.routers.authentik.tls.domains[0].main: "{{ ansible_nas_domain }}"
+          traefik.http.routers.authentik.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
           #traefik.http.middlewares.authentik-allowlist.IPAllowList.ipstrategy.depth: "1"
-          #traefik.http.middlewares.authentik-allowlist.IPAllowList.sourcerange: "127.0.0.1/32, 192.168.0.0/16"
-          traefik.http.routers.authentik.middlewares: "authentik-allowlist"
+          #traefik.http.middlewares.authentik-allowlist.IPAllowList.sourcerange: "127.0.0.1/32, 192.168.178.1/16"
+          #traefik.http.routers.authentik.middlewares: "authentik-allowlist"
           traefik.http.services.authentik.loadbalancer.server.port: "9000"
           homepage.group: "Security"
           homepage.name: "Authentik"
           homepage.icon: "authentik"
-          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ authentik_http_port }}"
+          homepage.href: "https://{{ authentik_hostname }}.{{ ansible_nas_domain }}"
         restart_policy: unless-stopped
         memory: "{{ authentik_server_memory }}"
 
