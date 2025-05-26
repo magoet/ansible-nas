@@ -1,0 +1,48 @@
+---
+# Enable or disable the application
+tandoor_enabled: false
+
+# Where the application data will be stored
+tandoor_data_directory: "{{ docker_home }}/tandoor"
+
+# Subdomain for external access
+tandoor_hostname: "tandoor"
+
+# External access
+tandoor_available_externally: false
+
+# Ports
+tandoor_port: 9925
+
+# Container names
+tandoor_db_container_name: "tandoor_db"
+tandoor_web_container_name: "tandoor_web"
+tandoor_nginx_container_name: "tandoor_nginx"
+
+# Docker images
+tandoor_db_image_name: "postgres"
+tandoor_db_image_version: "16-alpine"
+tandoor_web_image_name: "vabene1111/recipes"
+tandoor_web_image_version: "latest"
+tandoor_nginx_image_name: "nginx"
+tandoor_nginx_image_version: "mainline-alpine"
+
+# Volume names
+tandoor_staticfiles_volume_name: "tandoor_staticfiles"
+tandoor_nginx_config_volume_name: "tandoor_nginx_config"
+
+# Container memory
+tandoor_db_memory: "512m"
+tandoor_web_memory: "1g"
+tandoor_nginx_memory: "256m"
+
+# Language setting - uses the ansible_nas_locale variable from inventories
+tandoor_language_code: "{{ ansible_nas_locale | default('en-us') }}"
+
+# Database configuration (these should be overridden in inventories/*/group_vars/nas.yml)
+tandoor_db_name: "tandoor"
+tandoor_db_user: "tandoor"
+tandoor_db_password: "tandoor_change_me"
+tandoor_secret_key: "changeme_replaceme_withsecurekey"
+tandoor_debug: "0"
+tandoor_allowed_hosts: "{{ ansible_nas_hostname }},{{ tandoor_hostname }}.{{ ansible_nas_domain }}"

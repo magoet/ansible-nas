@@ -1,0 +1,110 @@
+---
+- name: Start Tandoor
+  block:
+    - name: Create Tandoor Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0755
+      with_items:
+        - "{{ tandoor_data_directory }}"
+        - "{{ tandoor_data_directory }}/postgresql"
+        - "{{ tandoor_data_directory }}/mediafiles"
+
+    - name: Tandoor PostgreSQL Docker Container
+      community.docker.docker_container:
+        name: "{{ tandoor_db_container_name }}"
+        image: "{{ tandoor_db_image_name }}:{{ tandoor_db_image_version }}"
+        pull: true
+        volumes:
+          - "{{ tandoor_data_directory }}/postgresql:/var/lib/postgresql/data:rw"
+        env:
+          POSTGRES_HOST: "{{ tandoor_db_container_name }}"
+          POSTGRES_PORT: "5432"
+          POSTGRES_USER: "{{ tandoor_db_user }}"
+          POSTGRES_PASSWORD: "{{ tandoor_db_password }}"
+          POSTGRES_DB: "{{ tandoor_db_name }}"
+        restart_policy: unless-stopped
+        memory: "{{ tandoor_db_memory }}"
+
+    - name: Tandoor Web Docker Container
+      community.docker.docker_container:
+        name: "{{ tandoor_web_container_name }}"
+        image: "{{ tandoor_web_image_name }}:{{ tandoor_web_image_version }}"
+        pull: true
+        volumes:
+          - "{{ tandoor_staticfiles_volume_name }}:/opt/recipes/staticfiles:rw"
+          - "{{ tandoor_nginx_config_volume_name }}:/opt/recipes/nginx/conf.d:rw"
+          - "{{ tandoor_data_directory }}/mediafiles:/opt/recipes/mediafiles:rw"
+        env:
+          POSTGRES_HOST: "{{ tandoor_db_container_name }}"
+          POSTGRES_PORT: "5432"
+          POSTGRES_USER: "{{ tandoor_db_user }}"
+          POSTGRES_PASSWORD: "{{ tandoor_db_password }}"
+          POSTGRES_DB: "{{ tandoor_db_name }}"
+          SECRET_KEY: "{{ tandoor_secret_key }}"
+          DEBUG: "{{ tandoor_debug }}"
+          ALLOWED_HOSTS: "{{ tandoor_allowed_hosts }}"
+          DB_ENGINE: "django.db.backends.postgresql"
+          GUNICORN_MEDIA: "0"
+          TIMEZONE: "{{ ansible_nas_timezone }}"
+          LANGUAGE_CODE: "{{ tandoor_language_code }}"
+        restart_policy: unless-stopped
+        memory: "{{ tandoor_web_memory }}"
+
+    - name: Tandoor Nginx Docker Container
+      community.docker.docker_container:
+        name: "{{ tandoor_nginx_container_name }}"
+        image: "{{ tandoor_nginx_image_name }}:{{ tandoor_nginx_image_version }}"
+        pull: true
+        ports:
+          - "{{ tandoor_port }}:80"
+        volumes:
+          - "{{ tandoor_nginx_config_volume_name }}:/etc/nginx/conf.d:ro"
+          - "{{ tandoor_staticfiles_volume_name }}:/static:ro"
+          - "{{ tandoor_data_directory }}/mediafiles:/media:ro"
+        env:
+          POSTGRES_HOST: "{{ tandoor_db_container_name }}"
+          POSTGRES_PORT: "5432"
+          POSTGRES_USER: "{{ tandoor_db_user }}"
+          POSTGRES_PASSWORD: "{{ tandoor_db_password }}"
+          POSTGRES_DB: "{{ tandoor_db_name }}"
+          SECRET_KEY: "{{ tandoor_secret_key }}"
+          DEBUG: "{{ tandoor_debug }}"
+          ALLOWED_HOSTS: "{{ tandoor_allowed_hosts }}"
+          DB_ENGINE: "django.db.backends.postgresql"
+          GUNICORN_MEDIA: "0"
+          TIMEZONE: "{{ ansible_nas_timezone }}"
+          LANGUAGE_CODE: "{{ tandoor_language_code }}"
+        restart_policy: unless-stopped
+        memory: "{{ tandoor_nginx_memory }}"
+        labels:
+          traefik.enable: "{{ tandoor_available_externally and traefik_enabled }}"
+          traefik.http.routers.tandoor.rule: "Host(`{{ tandoor_hostname }}.{{ ansible_nas_domain }}`)"
+          traefik.http.routers.tandoor.tls.certresolver: "letsencrypt"
+          traefik.http.routers.tandoor.tls: "true"
+          traefik.http.services.tandoor.loadbalancer.server.port: "80"
+          homepage.enable: "{{ homepage_enabled }}"
+          homepage.group: "Home"
+          homepage.name: "Tandoor"
+          homepage.icon: tandoor.png
+          homepage.description: "Recipe Manager"
+          homepage.href: "{% if tandoor_available_externally %}https://{{ tandoor_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ tandoor_port }}{% endif %}"
+
+- name: Stop Tandoor
+  block:
+    - name: Stop Tandoor Nginx
+      community.docker.docker_container:
+        name: "{{ tandoor_nginx_container_name }}"
+        state: absent
+
+    - name: Stop Tandoor Web
+      community.docker.docker_container:
+        name: "{{ tandoor_web_container_name }}"
+        state: absent
+
+    - name: Stop Tandoor DB
+      community.docker.docker_container:
+        name: "{{ tandoor_db_container_name }}"
+        state: absent
+  when: not tandoor_enabled

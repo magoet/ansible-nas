@@ -1,0 +1,19 @@
+---
+- name: Get stopped docker container info
+  docker_container_info:
+    name: "{{ item }}"
+  loop:
+    - "tandoor_db_recipes_1"
+    - "tandoor_web_recipes_1"
+    - "tandoor_nginx_recipes_1"
+  register: result
+  failed_when: false
+
+- name: Check if all containers are stopped or removed
+  assert:
+    that:
+      - "not result.results[0].exists or not result.results[0].container.State.Running"
+      - "not result.results[1].exists or not result.results[1].container.State.Running"
+      - "not result.results[2].exists or not result.results[2].container.State.Running"
+    fail_msg: "Not all tandoor containers are stopped/removed"
+    success_msg: "All tandoor containers are stopped/removed"

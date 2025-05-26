@@ -1,0 +1,25 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Get docker container info
+      docker_container_info:
+        name: "{{ item }}"
+      loop:
+        - "tandoor_db_recipes_1"
+        - "tandoor_web_recipes_1"
+        - "tandoor_nginx_recipes_1"
+      register: result
+
+    - name: Check if all containers are running
+      assert:
+        that:
+          - "result.results[0].exists"
+          - "result.results[0].container.State.Running"
+          - "result.results[1].exists"
+          - "result.results[1].container.State.Running"
+          - "result.results[2].exists"
+          - "result.results[2].container.State.Running"
+        fail_msg: "Not all tandoor containers are running"
+        success_msg: "All tandoor containers are running"

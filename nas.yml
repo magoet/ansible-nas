@@ -405,6 +405,10 @@
       tags:
         - tautulli
 
+    - role: tandoor
+      tags:
+        - tandoor
+
     - role: thelounge
       tags:
         - thelounge
