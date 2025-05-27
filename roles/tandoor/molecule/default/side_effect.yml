@@ -1,41 +1,10 @@
 ---
-- name: Side Effect
-  hosts: all
-  become: true
-  vars:
-    ansible_nas_user: molecule
-    docker_home: /tmp/docker
-    ansible_nas_hostname: molecule-nas
-    ansible_nas_domain: example.com
-    ansible_nas_timezone: Europe/London
-    tandoor_enabled: false
-  pre_tasks:
-    - name: Create docker group
-      group:
-        name: docker
-        state: present
-
-    - name: Create ansible-nas user
-      user:
-        name: "{{ ansible_nas_user }}"
-        groups: docker
-        append: true
-        state: present
-
-    - name: Create docker directory
-      file:
-        path: "{{ docker_home }}"
-        state: directory
-        mode: 0755
-
-  tasks:
-    - name: Include tandoor role
-      include_role:
-        name: tandoor
-
-- name: Verify services are stopped
+- name: Stop
   hosts: all
   become: true
   tasks:
-    - name: Include verify stopped playbook
-      include_tasks: verify_stopped.yml
+    - name: "Include {{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }} role"
+      ansible.builtin.include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      vars:
+        tandoor_enabled: false
