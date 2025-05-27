@@ -36,6 +36,8 @@
           - "{{ tandoor_staticfiles_volume_name }}:/opt/recipes/staticfiles:rw"
           - "{{ tandoor_nginx_config_volume_name }}:/opt/recipes/nginx/conf.d:rw"
           - "{{ tandoor_data_directory }}/mediafiles:/opt/recipes/mediafiles:rw"
+        links:
+          - "{{ tandoor_db_container_name }}:{{ tandoor_db_container_name }}"
         env:
           POSTGRES_HOST: "{{ tandoor_db_container_name }}"
           POSTGRES_PORT: "5432"
@@ -47,8 +49,10 @@
           ALLOWED_HOSTS: "{{ tandoor_allowed_hosts }}"
           DB_ENGINE: "django.db.backends.postgresql"
           GUNICORN_MEDIA: "0"
-          TIMEZONE: "{{ ansible_nas_timezone }}"
+          TZ: "{{ ansible_nas_timezone }}"
           LANGUAGE_CODE: "{{ tandoor_language_code }}"
+          SOCIAL_PROVIDERS: "allauth.socialaccount.providers.openid_connect"
+          SOCIALACCOUNT_PROVIDERS: "{{ tandoor_socialaccount_providers | string }}"
         restart_policy: unless-stopped
         memory: "{{ tandoor_web_memory }}"
 
@@ -63,6 +67,8 @@
           - "{{ tandoor_nginx_config_volume_name }}:/etc/nginx/conf.d:ro"
           - "{{ tandoor_staticfiles_volume_name }}:/static:ro"
           - "{{ tandoor_data_directory }}/mediafiles:/media:ro"
+        links:
+          - "{{ tandoor_web_container_name }}:web_recipes"
         env:
           POSTGRES_HOST: "{{ tandoor_db_container_name }}"
           POSTGRES_PORT: "5432"
@@ -74,8 +80,10 @@
           ALLOWED_HOSTS: "{{ tandoor_allowed_hosts }}"
           DB_ENGINE: "django.db.backends.postgresql"
           GUNICORN_MEDIA: "0"
-          TIMEZONE: "{{ ansible_nas_timezone }}"
+          TZ: "{{ ansible_nas_timezone }}"
           LANGUAGE_CODE: "{{ tandoor_language_code }}"
+          SOCIAL_PROVIDERS: "allauth.socialaccount.providers.openid_connect"
+          SOCIALACCOUNT_PROVIDERS: "{{ tandoor_socialaccount_providers | string }}"
         restart_policy: unless-stopped
         memory: "{{ tandoor_nginx_memory }}"
         labels:
@@ -86,7 +94,7 @@
           traefik.http.services.tandoor.loadbalancer.server.port: "80"
           homepage.group: "Home"
           homepage.name: "Tandoor"
-          homepage.icon: tandoor.png
+          homepage.icon: "tandoor-recipes.png"
           homepage.description: "Recipe Manager"
           homepage.href: "{% if tandoor_available_externally %}https://{{ tandoor_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ tandoor_port }}{% endif %}"
 
