@@ -59,12 +59,12 @@ homepage_settings_yaml:
 homepage_services_yaml:
   - Networking:
       - Router:
-          icon: avmfritzbox.png
-          href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] }}:{{ ddns_updater_port }}"
+          icon: avm-fritzbox.png
+          href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] }}"
           description: Fritzbox 7530
           widget:
             type: fritzbox
-            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] }}:{{ ddns_updater_port }}"
+            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] }}"
             fields: ["connectionStatus", "upTime", "maxDown", "maxUp", "down", "up", "received", "sent", "externalIPAddress"]
   - Monitoring:
       - Info:
