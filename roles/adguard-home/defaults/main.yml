@@ -1,0 +1,23 @@
+---
+# Enable or disable the application
+adguard_home_enabled: false
+adguard_home_available_externally: false
+
+# Directories
+adguard_home_data_directory: "{{ docker_home }}/adguard-home/data"
+adguard_home_conf_directory: "{{ docker_home }}/adguard-home/conf"
+
+# Network
+adguard_home_port_http: "{{ ansible_nas_ipv4_address }}:3000"
+adguard_home_port_dns: "{{ ansible_nas_ipv4_address }}:53"
+adguard_home_port_dns_tcp: "{{ ansible_nas_ipv4_address }}:853"
+adguard_home_port_tls: "{{ ansible_nas_ipv4_address }}:853"
+adguard_home_port_quic: "{{ ansible_nas_ipv4_address }}:784"
+
+# Container
+adguard_home_container_name: "adguard-home"
+adguard_home_image: "adguard/adguardhome"
+adguard_home_tag: "latest"
+
+# specs
+adguard_home_memory: 1g

@@ -1,0 +1,46 @@
+---
+- name: Create AdGuard Home Directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ adguard_home_data_directory }}/work"
+    - "{{ adguard_home_data_directory }}/conf"
+  when: adguard_home_enabled
+
+- name: AdGuard Home Docker Container
+  docker_container:
+    name: "{{ adguard_home_container_name }}"
+    image: "{{ adguard_home_image }}:{{ adguard_home_tag }}"
+    pull: true
+    volumes:
+      - "{{ adguard_home_data_directory }}/conf:/opt/adguardhome/conf"
+      - "{{ adguard_home_data_directory }}/work:/opt/adguardhome/work"
+    ports:
+      - "{{ adguard_home_port_http }}:3000"
+      - "{{ adguard_home_port_dns }}:53/udp"
+      - "{{ adguard_home_port_dns_tcp }}:53/tcp"
+      - "{{ adguard_home_port_tls }}:853/tcp"
+      - "{{ adguard_home_port_quic }}:784/udp"
+    restart_policy: unless-stopped
+    memory: "{{ adguard_home_memory }}"
+    labels:
+      traefik.enable: "{{ adguard_home_available_externally | string }}"
+      traefik.http.routers.adguard-home.rule: "Host(`{{ adguard_home_hostname }}.{{ ansible_nas_domain }}`)"
+      traefik.http.routers.adguard-home.tls.certresolver: "letsencrypt"
+      traefik.http.services.adguard-home.loadbalancer.server.port: "80"
+      homepage.name: "AdGuard Home"
+      homepage.description: "DNS server"
+      homepage.group: "Tools"
+      homepage.icon: "adguard-home.png"
+      homepage.href: "{% if adguard_home_available_externally %}https://{{ adguard_home_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ adguard_home_port_http }}{% endif %}"
+  when: adguard_home_enabled
+
+- name: Stop AdGuard Home
+  block:
+    - name: Stop AdGuard Home Container
+      docker_container:
+        name: "{{ adguard_home_container_name }}"
+        state: absent
+  when: not adguard_home_enabled

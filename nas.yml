@@ -57,13 +57,17 @@
       tags:
         - airsonic
 
+    - role: adguard-home
+      tags:
+        - adguard-home
+
     - role: apcupsd
       tags:
         - apcupsd
 
     - role: authentik
       tags:
-        - authentik    
+        - authentik
 
     - role: bazarr
       tags:
