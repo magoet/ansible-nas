@@ -30,16 +30,6 @@ You can also configure the photo upload directory by changing:
 immich_upload_directory: "/path/to/your/photos"
 ```
 
-### Immich Power Tools
-
-Immich Power Tools provides additional utilities for managing your Immich library. To enable it, set:
-
-```yaml
-immich_install_power_tools: true
-```
-
-The Immich Power Tools web interface can be accessed at [http://ansible_nas_host_or_ip:3035](http://ansible_nas_host_or_ip:3035).
-
 ### Hardware Considerations
 
 For optimal performance, especially with the machine learning features like facial recognition:
