@@ -8,6 +8,43 @@
       with_items:
         - "{{ jellyfin_config_directory }}"
 
+    - name: Detect GPU type
+      ansible.builtin.shell: |
+        if command -v nvidia-smi &> /dev/null; then
+          echo "nvidia"
+        elif [ -d "/sys/class/drm/renderD128" ] && grep -q "amdgpu" /sys/kernel/debug/dri/*/name 2>/dev/null; then
+          echo "amd"
+        elif [ -d "/sys/class/drm/renderD128" ]; then
+          echo "intel"
+        else
+          echo "none"
+        fi
+      register: gpu_detection
+      changed_when: false
+      check_mode: no
+
+    - name: Set GPU type fact
+      ansible.builtin.set_fact:
+        jellyfin_gpu_type: "{{ gpu_detection.stdout }}"
+
+    - name: Add Jellyfin user to appropriate groups for hardware transcoding
+      ansible.builtin.user:
+        name: "ansible-nas"
+        groups: "{{ jellyfin_gpu_groups[jellyfin_gpu_type] | default('video') }}"
+        append: yes
+      when:
+        - jellyfin_hardware_transcoding | default(false) is true
+        - jellyfin_gpu_groups[jellyfin_gpu_type] | default('') != ''
+
+    - name: Remove Jellyfin user from GPU groups when hardware transcoding is disabled
+      ansible.builtin.user:
+        name: "ansible-nas"
+        groups: "{{ jellyfin_gpu_groups[jellyfin_gpu_type] | default('video') }}"
+        append: no
+      when:
+        - not jellyfin_hardware_transcoding | default(false)
+        - jellyfin_gpu_groups[jellyfin_gpu_type] | default('') != ''
+
     - name: Jellyfin Docker Container
       community.docker.docker_container:
         name: "{{ jellyfin_container_name }}"
@@ -22,11 +59,13 @@
           - "{{ jellyfin_books_directory }}:/books:{{ jellyfin_books_permissions }}"
           - "{{ jellyfin_audiobooks_directory }}:/audiobooks:{{ jellyfin_audiobooks_permissions }}"
         ports:
-          - "{{ jellyfin_port_http }}:8096"
+          - "{{ jellyfin_port }}:8096"
+        user: "{{ jellyfin_user }}:{{ jellyfin_group }}"
+        devices: "{{ (jellyfin_hardware_transcoding and jellyfin_gpu_type != 'none') | ternary(jellyfin_gpu_devices[jellyfin_gpu_type] | default([]), []) }}"
+        runtime: "{{ (jellyfin_hardware_transcoding and jellyfin_gpu_type == 'nvidia') | ternary(jellyfin_nvidia_runtime, omit) }}"
+        device_requests: "{{ (jellyfin_hardware_transcoding and jellyfin_gpu_type == 'nvidia') | ternary(jellyfin_nvidia_device_requests, omit) }}"
         env:
           TZ: "{{ ansible_nas_timezone }}"
-          PUID: "{{ jellyfin_user_id }}"
-          PGID: "{{ jellyfin_group_id }}"
         restart_policy: unless-stopped
         memory: "{{ jellyfin_memory }}"
         labels:
@@ -53,4 +92,10 @@
       community.docker.docker_container:
         name: "{{ jellyfin_container_name }}"
         state: absent
+    - name: Remove Jellyfin user from GPU groups
+      ansible.builtin.user:
+        name: "ansible-nas"
+        groups: "{{ jellyfin_gpu_groups[jellyfin_gpu_type] | default('video') }}"
+        append: no
+      when: jellyfin_gpu_groups[jellyfin_gpu_type] | default('') != ''
   when: jellyfin_enabled is false

@@ -3,6 +3,39 @@
 jellyfin_enabled: false
 jellyfin_available_externally: false
 
+# hardware transcoding
+jellyfin_hardware_transcoding: false  # Set to true to enable hardware transcoding
+
+# GPU device mappings. Do not edit these unless you know what you're doing.
+# when choosing NVIDIA, ensure you have the NVIDIA Container Toolkit and the NVIDIA propriatary driver installed.
+jellyfin_gpu_devices:
+  intel:
+    - /dev/dri/renderD128:/dev/dri/renderD128
+  nvidia:
+    - /dev/nvidia0:/dev/nvidia0
+    - /dev/nvidiactl:/dev/nvidiactl
+    - /dev/nvidia-modeset:/dev/nvidia-modeset
+    - /dev/nvidia-uvm:/dev/nvidia-uvm
+    - /dev/nvidia-caps:/dev/nvidia-caps
+    - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+  amd:
+    - /dev/dri/renderD128:/dev/dri/renderD128
+  none: []  # Empty list for when no GPU is detected
+
+# GPU group mappings. Do not edit these unless you know what you're doing.
+jellyfin_gpu_groups:
+  intel: "video,render"
+  nvidia: "video"
+  amd: "video,render"
+  none: ""  # Empty string for when no GPU is detected
+
+# NVIDIA specific settings. Do not edit these unless you know what you're doing.
+jellyfin_nvidia_runtime: "nvidia"
+jellyfin_nvidia_device_requests:
+  - capabilities: [["gpu"]]
+    count: -1  # -1 means "all" in device_requests
+    driver: "nvidia"
+
 # directories
 jellyfin_config_directory: "{{ docker_home }}/jellyfin/config"
 jellyfin_movies_directory: "{{ movies_root }}"
@@ -20,17 +53,17 @@ jellyfin_tv_permissions: "rw"
 jellyfin_books_permissions: "rw"
 jellyfin_audiobooks_permissions: "rw"
 
-# uid / gid
-jellyfin_user_id: "0"
-jellyfin_group_id: "0"
+# user and group
+jellyfin_user: "ansible-nas"
+jellyfin_group: "ansible-nas"
 
 # network
 jellyfin_hostname: "jellyfin"
-jellyfin_port_http: "8096"
+jellyfin_port: "8096"
 
 # docker
 jellyfin_container_name: "jellyfin"
-jellyfin_image_name: "linuxserver/jellyfin"
+jellyfin_image_name: "jellyfin/jellyfin"
 jellyfin_image_version: "latest"
 
 # specs
