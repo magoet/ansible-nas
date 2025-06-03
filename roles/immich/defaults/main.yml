@@ -1,76 +1,35 @@
----
+# enable or disable the application
 immich_enabled: false
 immich_available_externally: false
-immich_install_power_tools: false
 
 # directories
 immich_data_directory: "{{ docker_home }}/immich"
-immich_upload_directory: "{{ ansible_nas_storage_volume }}/photos"
+immich_upload_directory: "{{ ansible_nas_storage_volume }}/photos/immich"
+immich_external_directory: "{{ ansible_nas_storage_volume }}/photos"
 
 # network
-immich_port: "2283"
-immich_power_tools_port: "3035"
 immich_hostname: "immich"
-immich_power_tools_hostname: "immich-power-tools"
-immich_network_name: "immich"
+immich_port: "2283"
+immich_network_name: "immich_network"
 
-# specs
-immich_postgres_memory: 2g
-immich_redis_memory: 512m
-immich_server_memory: 2g
-immich_machinelearning_memory: 4g
-immich_power_tools_memory: 1g
-
-# docker
-immich_postgres_container_name: "immich_postgres"
-immich_redis_container_name: "immich_redis"
-immich_server_container_name: "immich_server"
-immich_machinelearning_container_name: "immich_machine_learning"
-immich_power_tools_container_name: "immich_power_tools"
-
-immich_postgres_image: "tensorchord/pgvecto-rs"
-immich_postgres_tag: "pg14-v0.2.0"
-immich_redis_image: "redis"
-immich_redis_tag: "alpine"
-immich_server_image: "ghcr.io/immich-app/immich-server"
-immich_server_tag: "{{ immich_version }}"
-immich_machinelearning_image: "ghcr.io/immich-app/immich-machine-learning"
-immich_machinelearning_tag: "{{ immich_version }}"
-immich_power_tools_image: "ghcr.io/varun-raj/immich-power-tools"
-immich_power_tools_tag: "latest"
-immich_user_id: "1000"
-immich_group_id: "1000"
+# specs	
+immich_server_memory: "2g"
+immich_machinelearning_memory: "4g"
+immich_postgres_memory: "1g"
+immich_redis_memory: "1g"
 
 # database
-immich_db_password: "postgres" # $(pwgen -s 40 1)
+#immich_db_password: "postgres" # Set DB password in nas.yml, use a secure random string generator
 immich_db_username: "postgres"
 immich_db_name: "immich"
-immich_db_port: "5432"
 
-# immich
-immich_version: "release"
-immich_enable_mapbox: "false"
-immich_mapbox_key: ""
-immich_public_login_page_message: "Welcome to Immich!"
-immich_api_key: ""
-immich_metrics: "false"
+immich_version: "release"  # Set to "latest" for the latest version, or a specific version tag
 
 immich_env:
-  TZ: "{{ ansible_nas_timezone }}"
-  PUID: "{{ immich_user_id | quote }}"
-  PGID: "{{ immich_group_id | quote }}"
-  NODE_ENV: "production"
-  IMMICH_VERSION: "{{ immich_version }}"
-  REDIS_HOSTNAME: "{{ immich_redis_container_name }}"
-  DB_HOSTNAME: "{{ immich_postgres_container_name }}"
-  DB_USERNAME: "{{ immich_db_username }}"
-  DB_PASSWORD: "{{ immich_db_password }}"
-  DB_DATABASE_NAME: "{{ immich_db_name }}"
-  DB_PORT: "{{ immich_db_port }}"
-  JWT_SECRET: "{{ immich_jwt_secret }}"
-  ENABLE_MAPBOX: "{{ immich_enable_mapbox }}"
-  MAPBOX_KEY: "{{ immich_mapbox_key }}"
   UPLOAD_LOCATION: "{{ immich_upload_directory }}"
-  PUBLIC_LOGIN_PAGE_MESSAGE: "{{ immich_public_login_page_message }}"
-  IMMICH_WORKERS_INCLUDE: 'api'
-  IMMICH_METRICS: "{{ immich_metrics }}"
+  DB_DATA_LOCATION: "{{ immich_data_directory }}"
+  TZ: "{{ ansible_nas_timezone }}"
+  IMMICH_VERSION: "{{ immich_version }}"
+  DB_PASSWORD: "{{ immich_db_password }}"
+  DB_USERNAME: "{{ immich_db_username }}"
+  DB_DATABASE_NAME: "{{ immich_db_name }}"
