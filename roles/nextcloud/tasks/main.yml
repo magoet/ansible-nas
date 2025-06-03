@@ -13,6 +13,26 @@
       community.docker.docker_network:
         name: "{{ nextcloud_network_name }}"
 
+    - name: "Add www-data to ansible-nas group when Nextcloud is enabled"
+      ansible.builtin.user:
+        name: www-data
+        groups: ansible-nas
+        append: yes
+
+    - name: Prepare all Nextcloud volumes
+      ansible.builtin.set_fact:
+        nextcloud_all_volumes:
+          - "{{ nextcloud_data_directory }}/nextcloud:/var/www/html:rw"
+          # - "{{ nextcloud_data_directory }}/nextcloud/custom_apps:/var/www/html/custom_apps:rw"
+          # - "{{ nextcloud_data_directory }}/nextcloud/config:/var/www/html/config:rw"
+          # - "{{ nextcloud_data_directory }}/nextcloud/data:/var/www/html/data:rw"
+          # - "{{ nextcloud_data_directory }}/nextcloud/themes:/var/www/html/themes:rw"
+
+    - name: Add share volumes to Nextcloud volumes
+      ansible.builtin.set_fact:
+        nextcloud_all_volumes: "{{ nextcloud_all_volumes + [item.path ~ ':/external_storage/' ~ item.name ~ ':rw'] }}"
+      with_items: "{{ samba_shares }}"
+
     - name: Nextcloud Mysql Docker Container
       community.docker.docker_container:
         name: "{{ nextcloud_db_container_name }}"
@@ -39,28 +59,7 @@
           - name: "{{ nextcloud_network_name }}"
         network_mode: "{{ nextcloud_network_name }}"
         pull: true
-        volumes:
-          - "{{ nextcloud_data_directory }}/nextcloud:/var/www/html:rw"
-          # - "{{ nextcloud_data_directory }}/nextcloud/custom_apps:/var/www/html/custom_apps:rw"
-          # - "{{ nextcloud_data_directory }}/nextcloud/config:/var/www/html/config:rw"
-          # - "{{ nextcloud_data_directory }}/nextcloud/data:/var/www/html/data:rw"
-          # - "{{ nextcloud_data_directory }}/nextcloud/themes:/var/www/html/themes:rw"
-          - "{{ downloads_root }}:/downloads:rw"
-          - "{{ movies_root }}:/movies:rw"
-          - "{{ tv_root }}:/tv:rw"
-          - "{{ torrents_root }}:/torrents:rw"
-          - "{{ music_root }}:/music:rw"
-#          - "{{ podcasts_root }}:/podcasts:rw"
-          - "{{ books_root }}:/books:rw"
-#          - "{{ audiobooks_root }}:/audiobooks:rw"
-#          - "{{ comics_root }}:/comics:rw"
-          - "{{ games_root }}:/games:rw"
-          - "{{ photos_root }}:/photos:rw"
-          - "{{ documents_root }}:/documents:rw"
-#          - "{{ dump_root }}:/dump:rw"
-          - "{{ code_root }}:/code:rw"
-#          - "{{ roms_root }}:/roms:rw"
-#          - "{{ recordings_root }}:/recordings:rw"
+        volumes: "{{ nextcloud_all_volumes }}"
         ports:
           - "{{ nextcloud_port }}:80"
         env:
@@ -90,8 +89,8 @@
           homepage.icon: nextcloud.png
           homepage.href: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
           homepage.description: Open source dropbox alternative
-          homepage.widget.type: nextcloud
-          homepage.widget.url: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
+         # homepage.widget.type: nextcloud
+         # homepage.widget.url: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
   when: nextcloud_enabled is true
 
 - name: Stop Nextcloud
@@ -104,4 +103,9 @@
       community.docker.docker_container:
         name: "{{ nextcloud_db_container_name }}"
         state: absent
+    - name: "Remove www-data from ansible-nas group when Nextcloud is disabled"
+      ansible.builtin.user:
+        name: www-data
+        groups: ""
+        append: no
   when: nextcloud_enabled is false
