@@ -37,16 +37,17 @@
         restart: "{{ ddns_updater_config is changed }}"
         memory: "{{ ddns_updater_memory }}"
         labels:
-          traefik.enable: "{{ ddns_updater_available_externally }}"
+          traefik.enable: "{{ ddns_updater_available_externally | string }}"
           traefik.http.routers.airsonic.rule: "Host(`{{ ddns_updater_hostname }}.{{ ansible_nas_domain }}`)"
           traefik.http.routers.airsonic.tls.certresolver: "letsencrypt"
           traefik.http.routers.airsonic.tls.domains[0].main: "{{ ansible_nas_domain }}"
           traefik.http.routers.airsonic.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
           traefik.http.services.airsonic.loadbalancer.server.port: "8000"
-          homepage.group: Networking
-          homepage.name: DDNS Updater
-          homepage.icon: ddns-updater
-          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ ddns_updater_port }}"
+          homepage.group: "Networking"
+          homepage.name: "DDNS Updater"
+          homepage.icon: "ddns-updater.png"
+          homepage.description: "Dynamic DNS updater"
+          homepage.href: "{% if ddns_updater_available_externally %}https://{{ ddns_updater_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ ddns_updater_port }}{% endif %}"
   when: ddns_updater_enabled is true
 
 - name: Stop DDNS Updater

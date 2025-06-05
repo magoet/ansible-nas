@@ -1,6 +1,6 @@
 ---
 ddns_updater_enabled: false
-ddns_updater_available_externally: "false"
+ddns_updater_available_externally: false
 
 # directories
 ddns_updater_data_directory: "{{ docker_home }}/ddns_updater"
