@@ -25,12 +25,11 @@
           traefik.http.routers.glances.tls.domains[0].main: "{{ ansible_nas_domain }}"
           traefik.http.routers.glances.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
           traefik.http.services.glances.loadbalancer.server.port: "61208"
-          homepage.group: "Monitoring"
+          homepage.group: "Tools"
           homepage.name: "Glances"
-          homepage.icon: "glances"
-          homepage.href: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
-          homepage.widget.type: "glances"
-          homepage.widget.url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one  }}"
+          homepage.icon: "glances.png"
+          homepage.href: "{% if glances_available_externally %}https://{{ glances_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ glances_port_one }}{% endif %}"
+          homepage.description: "Real-time system monitoring tool"
   when: glances_enabled is true
 
 - name: Stop Glances

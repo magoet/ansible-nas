@@ -114,10 +114,11 @@
           #traefik.http.middlewares.authentik-allowlist.IPAllowList.sourcerange: "127.0.0.1/32, 192.168.178.1/16"
           #traefik.http.routers.authentik.middlewares: "authentik-allowlist"
           traefik.http.services.authentik.loadbalancer.server.port: "9000"
-          homepage.group: "Security"
+          homepage.group: "Tools"
           homepage.name: "Authentik"
-          homepage.icon: "authentik"
-          homepage.href: "https://{{ authentik_hostname }}.{{ ansible_nas_domain }}"
+          homepage.icon: "authentik.png"
+          homepage.description: "Identity Provider and SSO solution"
+          homepage.href: "{% if authentik_available_externally %}https://{{ authentik_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ authentik_port }}{% endif %}"
         restart_policy: unless-stopped
         memory: "{{ authentik_server_memory }}"
 
