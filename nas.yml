@@ -101,6 +101,10 @@
       tags:
         - code-server
 
+    - role: configarr
+      tags:
+        - configarr    
+
     - role: couchpotato
       tags:
         - couchpotato
