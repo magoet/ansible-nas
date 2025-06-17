@@ -33,6 +33,8 @@
           PERIOD: "{{ ddns_updater_period }}"
           UPDATE_COOLDOWN_PERIOD: "{{ ddns_updater_cooldown_period }}"
           HTTP_TIMEOUT: "{{ ddns_updater_http_timeout }}"
+          UID: "{{ ddns_updater_user_id }}"
+          GID: "{{ ddns_updater_group_id }}"
         restart_policy: unless-stopped
         restart: "{{ ddns_updater_config is changed }}"
         memory: "{{ ddns_updater_memory }}"

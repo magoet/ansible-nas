@@ -5,6 +5,10 @@ ddns_updater_available_externally: false
 # directories
 ddns_updater_data_directory: "{{ docker_home }}/ddns_updater"
 
+# user
+ddns_updater_user_id: "1000"
+ddns_updater_group_id: "1000"
+
 # network
 ddns_updater_port: 8202
 ddns_updater_hostname: "ddns-updater"
