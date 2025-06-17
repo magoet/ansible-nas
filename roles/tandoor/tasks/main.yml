@@ -6,16 +6,35 @@
         path: "{{ item }}"
         state: directory
         mode: 0755
+        owner: "{{ tandoor_user_id }}"
+        group: "{{ tandoor_group_id }}"
+        recurse: true
       with_items:
         - "{{ tandoor_data_directory }}"
         - "{{ tandoor_data_directory }}/postgresql"
         - "{{ tandoor_data_directory }}/mediafiles"
+        - "{{ tandoor_data_directory }}/nginx-run"
+
+    - name: Create Nginx temp directories
+      ansible.builtin.file:
+        path: "{{ tandoor_data_directory }}/nginx-temp/{{ item }}"
+        state: directory
+        mode: 0755
+        owner: "{{ tandoor_user_id }}"
+        group: "{{ tandoor_group_id }}"
+      with_items:
+        - "client_temp"
+        - "proxy_temp"
+        - "fastcgi_temp"
+        - "uwsgi_temp"
+        - "scgi_temp"
 
     - name: Tandoor PostgreSQL Docker Container
       community.docker.docker_container:
         name: "{{ tandoor_db_container_name }}"
         image: "{{ tandoor_db_image_name }}:{{ tandoor_db_image_version }}"
         pull: true
+        user: "{{ tandoor_user_id }}:{{ tandoor_group_id }}"
         volumes:
           - "{{ tandoor_data_directory }}/postgresql:/var/lib/postgresql/data:rw"
         env:
@@ -32,6 +51,7 @@
         name: "{{ tandoor_web_container_name }}"
         image: "{{ tandoor_web_image_name }}:{{ tandoor_web_image_version }}"
         pull: true
+        user: "{{ tandoor_user_id }}:{{ tandoor_group_id }}"
         volumes:
           - "{{ tandoor_staticfiles_volume_name }}:/opt/recipes/staticfiles:rw"
           - "{{ tandoor_nginx_config_volume_name }}:/opt/recipes/nginx/conf.d:rw"
@@ -61,12 +81,15 @@
         name: "{{ tandoor_nginx_container_name }}"
         image: "{{ tandoor_nginx_image_name }}:{{ tandoor_nginx_image_version }}"
         pull: true
+        user: "{{ tandoor_user_id }}:{{ tandoor_group_id }}"
         ports:
           - "{{ tandoor_port }}:80"
         volumes:
           - "{{ tandoor_nginx_config_volume_name }}:/etc/nginx/conf.d:ro"
           - "{{ tandoor_staticfiles_volume_name }}:/static:ro"
           - "{{ tandoor_data_directory }}/mediafiles:/media:ro"
+          - "{{ tandoor_data_directory }}/nginx-temp:/var/cache/nginx:rw"
+          - "{{ tandoor_data_directory }}/nginx-run:/run:rw"
         links:
           - "{{ tandoor_web_container_name }}:web_recipes"
         env:

@@ -14,6 +14,10 @@ tandoor_available_externally: false
 # Ports
 tandoor_port: 9925
 
+# user and group IDs for the Tandoor web application
+tandoor_user_id: "1000"
+tandoor_group_id: "1000"
+
 # Container names
 tandoor_db_container_name: "tandoor_db"
 tandoor_web_container_name: "tandoor_web"
