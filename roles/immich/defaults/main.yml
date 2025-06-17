@@ -12,8 +12,12 @@ immich_hostname: "immich"
 immich_port: "2283"
 immich_network_name: "immich_network"
 
+#user
+immich_user_id: "1000"
+immich_group_id: "1000"
+
 # specs	
-immich_server_memory: "2g"
+immich_server_memory: "4g"
 immich_machinelearning_memory: "4g"
 immich_postgres_memory: "1g"
 immich_redis_memory: "1g"
@@ -33,3 +37,5 @@ immich_env:
   DB_PASSWORD: "{{ immich_db_password }}"
   DB_USERNAME: "{{ immich_db_username }}"
   DB_DATABASE_NAME: "{{ immich_db_name }}"
+  UID: "{{ immich_user_id }}"
+  GID: "{{ immich_group_id }}"
