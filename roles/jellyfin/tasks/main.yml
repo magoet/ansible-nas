@@ -10,11 +10,11 @@
 
     - name: Detect GPU type
       ansible.builtin.shell: |
-        if command -v nvidia-smi &> /dev/null; then
+        if command -v nvidia-smi &> /dev/null && nvidia-smi -L 2>/dev/null | grep -q "GPU"; then
           echo "nvidia"
         elif [ -d "/sys/class/drm/renderD128" ] && grep -q "amdgpu" /sys/kernel/debug/dri/*/name 2>/dev/null; then
           echo "amd"
-        elif [ -d "/sys/class/drm/renderD128" ]; then
+        elif [ -d "/sys/class/drm/renderD128" ] || lspci | grep -i "VGA.*Intel" > /dev/null; then
           echo "intel"
         else
           echo "none"
@@ -26,6 +26,10 @@
     - name: Set GPU type fact
       ansible.builtin.set_fact:
         jellyfin_gpu_type: "{{ gpu_detection.stdout }}"
+
+    - name: Display detected GPU type
+      ansible.builtin.debug:
+        msg: "Detected GPU type: {{ jellyfin_gpu_type }}"
 
     - name: Add Jellyfin user to appropriate groups for hardware transcoding
       ansible.builtin.user:
@@ -60,12 +64,13 @@
           - "{{ jellyfin_audiobooks_directory }}:/audiobooks:{{ jellyfin_audiobooks_permissions }}"
         ports:
           - "{{ jellyfin_port }}:8096"
-        user: "{{ jellyfin_user }}:{{ jellyfin_group }}"
         devices: "{{ (jellyfin_hardware_transcoding and jellyfin_gpu_type != 'none') | ternary(jellyfin_gpu_devices[jellyfin_gpu_type] | default([]), []) }}"
         runtime: "{{ (jellyfin_hardware_transcoding and jellyfin_gpu_type == 'nvidia') | ternary(jellyfin_nvidia_runtime, omit) }}"
         device_requests: "{{ (jellyfin_hardware_transcoding and jellyfin_gpu_type == 'nvidia') | ternary(jellyfin_nvidia_device_requests, omit) }}"
         env:
           TZ: "{{ ansible_nas_timezone }}"
+          UID: "{{ jellyfin_user_id }}"
+          GID: "{{ jellyfin_group_id }}"
         restart_policy: unless-stopped
         memory: "{{ jellyfin_memory }}"
         labels:

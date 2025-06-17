@@ -4,7 +4,7 @@ jellyfin_enabled: false
 jellyfin_available_externally: false
 
 # hardware transcoding
-jellyfin_hardware_transcoding: false  # Set to true to enable hardware transcoding
+jellyfin_hardware_transcoding: true  # Set to true to enable hardware transcoding
 
 # GPU device mappings. Do not edit these unless you know what you're doing.
 # when choosing NVIDIA, ensure you have the NVIDIA Container Toolkit and the NVIDIA propriatary driver installed.
@@ -54,7 +54,8 @@ jellyfin_books_permissions: "rw"
 jellyfin_audiobooks_permissions: "rw"
 
 # user and group
-jellyfin_user: "ansible-nas"
+jellyfin_user_id: "1000"
+jellyfin_group_id: "1000"
 jellyfin_group: "ansible-nas"
 
 # network
