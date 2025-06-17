@@ -7,6 +7,10 @@ adguard_home_available_externally: false
 adguard_home_data_directory: "{{ docker_home }}/adguard-home/data"
 adguard_home_conf_directory: "{{ docker_home }}/adguard-home/conf"
 
+# User and Group
+adguard_home_user_id: "1000"
+adguard_home_group_id: "1000"
+
 # Network
 adguard_home_port_http: "3000"
 adguard_home_port_dns: "53"
