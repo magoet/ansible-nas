@@ -8,8 +8,8 @@ sonarr_tv_directory: "{{ tv_root }}"
 sonarr_download_directory: "{{ downloads_root }}"
 
 # uid / gid
-sonarr_user_id: "0"
-sonarr_group_id: "0"
+sonarr_user_id: "1000"
+sonarr_group_id: "1000"
 
 # network
 sonarr_port: "8989"

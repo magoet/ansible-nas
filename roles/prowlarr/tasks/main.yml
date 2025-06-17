@@ -7,6 +7,10 @@
         state: directory
       with_items:
         - "{{ prowlarr_data_directory }}"
+  
+    - name: Create arr Docker Network
+      community.docker.docker_network:
+        name: "arr"
 
     - name: Create Prowlarr Docker Container
       community.docker.docker_container:
@@ -23,6 +27,9 @@
           PGID: "{{ prowlarr_group_id }}"
         restart_policy: unless-stopped
         memory: "{{ prowlarr_memory }}"
+        networks: 
+          - name: "arr"
+        network_mode: "arr"
         labels:
           traefik.enable: "{{ prowlarr_available_externally | string }}"
           traefik.http.routers.prowlarr.rule: "Host(`{{ prowlarr_hostname }}.{{ ansible_nas_domain }}`)"

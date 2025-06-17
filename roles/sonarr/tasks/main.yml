@@ -7,6 +7,10 @@
         state: directory
       with_items:
         - "{{ sonarr_data_directory }}"
+      
+    - name: Create arr Docker Network
+      community.docker.docker_network:
+        name: "arr"
 
     - name: Sonarr
       community.docker.docker_container:
@@ -25,6 +29,9 @@
           PGID: "{{ sonarr_group_id }}"
         restart_policy: unless-stopped
         memory: "{{ sonarr_memory }}"
+        networks: 
+          - name: "arr"
+        network_mode: "arr"
         labels:
           traefik.enable: "{{ sonarr_available_externally | string }}"
           traefik.http.routers.sonarr.rule: "Host(`{{ sonarr_hostname }}.{{ ansible_nas_domain }}`)"
@@ -35,6 +42,7 @@
           homepage.group: "Download Tools"
           homepage.name: "Sonarr"
           homepage.icon: "sonarr"
+          homepage.description: "TV series manager for Usenet and BitTorrent."
           homepage.href: "{% if sonarr_available_externally %}https://{{ sonarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ sonarr_port }}{% endif %}"
   when: sonarr_enabled is true
 

@@ -8,8 +8,8 @@ lidarr_music_directory: "{{ music_root }}"
 lidarr_downloads_directory: "{{ downloads_root }}"
 
 # uid/gid
-lidarr_user_id: "0"
-lidarr_group_id: "0"
+lidarr_user_id: "1000"
+lidarr_group_id: "1000"
 
 # network
 lidarr_port: "8686"

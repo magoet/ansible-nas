@@ -6,8 +6,8 @@ prowlarr_available_externally: false
 prowlarr_data_directory: "{{ docker_home }}/prowlarr/config"
 
 # uid / gid
-prowlarr_user_id: "0"
-prowlarr_group_id: "0"
+prowlarr_user_id: "1000"
+prowlarr_group_id: "1000"
 
 # network
 prowlarr_port: "9696"
