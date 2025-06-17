@@ -1,0 +1,37 @@
+# With this options you can disable or enable processing for *arrs. Default is enabled
+#sonarrEnabled: false
+#radarrEnabled: false
+whisparrEnabled: false
+readarrEnabled: false
+lidarrEnabled: false
+
+# Radarr Configuration
+radarr:
+  instance1: # Instance name (can be any unique identifier)
+    base_url: http://radarr:7878 # Radarr instance URL
+    api_key: !secret RADARR_API_KEY # Reference to API key in secrets.yml
+    media_naming:
+      folder: default
+      movie:
+        rename: true
+        standard: default
+    include:
+      - template: 2b90e905c99490edc7c7a5787443748b
+        source: TRASH
+        
+      
+
+# Sonarr Configuration
+sonarr:
+  instance1: # Instance name (can be any unique identifier)
+    base_url: http://sonarr:8989 # Sonarr instance URL
+    api_key: !secret SONARR_API_KEY # Reference to API key in secrets.yml
+    # api_key: !env SONARR_API_KEY # load from environment variable
+    media_naming:
+      series: default
+      season: default
+      episodes:
+        rename: true
+        standard: default
+        daily: default
+        anime: default

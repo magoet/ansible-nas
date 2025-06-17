@@ -1,0 +1,18 @@
+---
+configarr_enabled: false
+configarr_available_externally: false
+
+# directories
+configarr_data_directory: "{{ docker_home }}/configarr"
+
+# uid/gid
+configarr_user_id: "1000"
+configarr_group_id: "1000"
+
+configarr_hostname: "configarr"
+
+# specs
+configarr_memory: 1g
+
+# docker
+configarr_container_name: configarr

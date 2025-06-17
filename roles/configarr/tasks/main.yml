@@ -1,0 +1,51 @@
+---
+- name: Start configarr
+  block:
+    - name: Create configarr Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ configarr_data_directory }}"
+        - "{{ configarr_data_directory }}/config"
+
+    - name: Copy configarr config files
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: '0644'
+      with_items:
+        - { src: 'config/config.yml', dest: '{{ configarr_data_directory }}/config/config.yml' }
+        - { src: 'config/secrets.yml', dest: '{{ configarr_data_directory }}/config/secrets.yml' }
+
+    - name: Create arr Docker Network
+      community.docker.docker_network:
+        name: "arr"
+
+    - name: configarr
+      community.docker.docker_container:
+        name: "{{ configarr_container_name }}"
+        image: ghcr.io/raydak-labs/configarr:latest
+        pull: true
+        user: "{{ configarr_user_id }}:{{ configarr_group_id }}"
+        volumes:
+          - "{{ configarr_data_directory }}/config:/app/config:rw"
+          - "{{ configarr_data_directory }}/repos:/app/repos:rw"
+          - "{{ configarr_data_directory }}/cfs:/app/cfs:rw"
+          - "{{ configarr_data_directory }}/templates:/app/templates:rw"
+        env:
+          TZ: "{{ ansible_nas_timezone }}"
+        restart_policy: unless-stopped
+        memory: "{{ configarr_memory }}"
+        networks:
+          - name: "arr"
+        network_mode: "arr"
+  when: configarr_enabled is true
+
+- name: Stop configarr
+  block:
+    - name: Stop configarr
+      community.docker.docker_container:
+        name: "{{ configarr_container_name }}"
+        state: absent
+  when: configarr_enabled is false
