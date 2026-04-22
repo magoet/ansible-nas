@@ -1,0 +1,19 @@
+---
+profilarr_enabled: false
+profilarr_available_externally: false
+
+# directories
+profilarr_data_directory: "{{ docker_home }}/profilarr"
+
+# uid/gid
+profilarr_user_id: "1000"
+profilarr_group_id: "1000"
+
+profilarr_hostname: "profilarr"
+profilarr_port: "6868"
+
+# specs
+profilarr_memory: 1g
+
+# docker
+profilarr_container_name: profilarr

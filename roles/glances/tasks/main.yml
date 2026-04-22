@@ -8,11 +8,12 @@
         pull: true
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
+          - "/etc/os-release:/etc/os-release:ro"
           - "/etc/timezone:/etc/timezone:ro"
+          - "/mnt:/mnt:ro"
         pid_mode: host
         ports:
           - "{{ glances_port_one }}:61208"
-          - "{{ glances_port_two }}:61209"
         env:
           GLANCES_OPT: "-w"
         restart_policy: unless-stopped

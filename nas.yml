@@ -99,11 +99,7 @@
 
     - role: code-server
       tags:
-        - code-server
-
-    - role: configarr
-      tags:
-        - configarr    
+        - code-server  
 
     - role: couchpotato
       tags:
@@ -348,6 +344,10 @@
     - role: portainer
       tags:
         - portainer
+
+    - role: profilarr
+      tags:
+        - profilarr
 
     - role: prowlarr
       tags:

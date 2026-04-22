@@ -14,6 +14,9 @@ tandoor_available_externally: false
 # Ports
 tandoor_port: 9925
 
+# Network name for Tandoor containers
+tandoor_network_name: "tandoor"
+
 # user and group IDs for the Tandoor web application
 tandoor_user_id: "1000"
 tandoor_group_id: "1000"
@@ -21,24 +24,24 @@ tandoor_group_id: "1000"
 # Container names
 tandoor_db_container_name: "tandoor_db"
 tandoor_web_container_name: "tandoor_web"
-tandoor_nginx_container_name: "tandoor_nginx"
+# tandoor_nginx_container_name: "tandoor_nginx"
 
 # Docker images
-tandoor_db_image_name: "postgres"
-tandoor_db_image_version: "16-alpine"
+tandoor_db_image_name: "11notes/postgres"
+tandoor_db_image_version: "16"
 tandoor_web_image_name: "vabene1111/recipes"
 tandoor_web_image_version: "latest"
-tandoor_nginx_image_name: "nginx"
-tandoor_nginx_image_version: "mainline-alpine"
+# tandoor_nginx_image_name: "nginx"
+# tandoor_nginx_image_version: "mainline-alpine"
 
 # Volume names
 tandoor_staticfiles_volume_name: "tandoor_staticfiles"
-tandoor_nginx_config_volume_name: "tandoor_nginx_config"
+#tandoor_nginx_config_volume_name: "tandoor_nginx_config"
 
 # Container memory
 tandoor_db_memory: "512m"
 tandoor_web_memory: "1g"
-tandoor_nginx_memory: "256m"
+#tandoor_nginx_memory: "256m"
 
 # Language setting - uses the ansible_nas_locale variable from inventories
 tandoor_language_code: "{{ ansible_nas_locale | default('en-us') }}"

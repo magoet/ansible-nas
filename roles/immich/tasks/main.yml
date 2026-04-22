@@ -42,8 +42,8 @@
         env:
           UID: "{{ immich_user_id }}"
           GID: "{{ immich_group_id }}"
-        healthcheck:
-          test: redis-cli ping || exit 1
+        #healthcheck:
+        #  test: redis-cli ping || exit 1
         restart_policy: unless-stopped
         memory: "{{ immich_redis_memory }}"
         networks:

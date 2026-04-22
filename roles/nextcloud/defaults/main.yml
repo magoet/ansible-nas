@@ -20,5 +20,5 @@ nextcloud_db_image_name: "mysql"
 nextcloud_db_image_version: "8.3"
 
 # specs
-nextcloud_memory: 1g
-nextcloud_db_memory: 1g
+nextcloud_memory: 2g
+nextcloud_db_memory: 2g

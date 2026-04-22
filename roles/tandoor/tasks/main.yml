@@ -11,23 +11,44 @@
         recurse: true
       with_items:
         - "{{ tandoor_data_directory }}"
-        - "{{ tandoor_data_directory }}/postgresql"
         - "{{ tandoor_data_directory }}/mediafiles"
-        - "{{ tandoor_data_directory }}/nginx-run"
+        - "{{ tandoor_data_directory }}/config"
 
-    - name: Create Nginx temp directories
+    - name: Create Tandoor PostgreSQL Directory
       ansible.builtin.file:
-        path: "{{ tandoor_data_directory }}/nginx-temp/{{ item }}"
+        path: "{{ tandoor_data_directory }}/postgresql"
         state: directory
-        mode: 0755
+        mode: 0700
         owner: "{{ tandoor_user_id }}"
         group: "{{ tandoor_group_id }}"
+
+    - name: Create Docker volumes for Tandoor
+      community.docker.docker_volume:
+        name: "{{ item }}"
+        state: present
       with_items:
-        - "client_temp"
-        - "proxy_temp"
-        - "fastcgi_temp"
-        - "uwsgi_temp"
-        - "scgi_temp"
+        - "{{ tandoor_staticfiles_volume_name }}"
+
+    - name: Fix permissions on Docker volumes
+      ansible.builtin.shell: |
+        docker run --rm \
+          -v {{ tandoor_staticfiles_volume_name }}:/data \
+          alpine:latest \
+          chown -R {{ tandoor_user_id }}:{{ tandoor_group_id }} /data
+      changed_when: true
+
+    - name: Deploy custom pg_hba.conf for Tandoor PostgreSQL
+      ansible.builtin.template:
+        src: pg_hba.conf.j2
+        dest: "{{ tandoor_data_directory }}/config/pg_hba.conf"
+        owner: "{{ tandoor_user_id }}"
+        group: "{{ tandoor_group_id }}"
+        mode: 0644
+
+    - name: Create Tandoor Docker Network
+      community.docker.docker_network:
+        name: "{{ tandoor_network_name }}"
+        state: present
 
     - name: Tandoor PostgreSQL Docker Container
       community.docker.docker_container:
@@ -35,14 +56,21 @@
         image: "{{ tandoor_db_image_name }}:{{ tandoor_db_image_version }}"
         pull: true
         user: "{{ tandoor_user_id }}:{{ tandoor_group_id }}"
+        read_only: true
+        security_opts:
+          - "no-new-privileges=true"
         volumes:
-          - "{{ tandoor_data_directory }}/postgresql:/var/lib/postgresql/data:rw"
+          - "{{ tandoor_data_directory }}/postgresql:/postgres/var:rw"
+          - "{{ tandoor_data_directory }}/config/pg_hba.conf:/postgres/etc/pg_hba.conf:ro"
+        tmpfs:
+        # needed for read-only
+          - "/postgres/run:uid={{ tandoor_user_id }},gid={{ tandoor_group_id }}"
+          - "/postgres/log:uid={{ tandoor_user_id }},gid={{ tandoor_group_id }}"
+        networks:
+          - name: "{{ tandoor_network_name }}"
         env:
-          POSTGRES_HOST: "{{ tandoor_db_container_name }}"
-          POSTGRES_PORT: "5432"
-          POSTGRES_USER: "{{ tandoor_db_user }}"
           POSTGRES_PASSWORD: "{{ tandoor_db_password }}"
-          POSTGRES_DB: "{{ tandoor_db_name }}"
+          TZ: "{{ ansible_nas_timezone }}"
         restart_policy: unless-stopped
         memory: "{{ tandoor_db_memory }}"
 
@@ -54,44 +82,11 @@
         user: "{{ tandoor_user_id }}:{{ tandoor_group_id }}"
         volumes:
           - "{{ tandoor_staticfiles_volume_name }}:/opt/recipes/staticfiles:rw"
-          - "{{ tandoor_nginx_config_volume_name }}:/opt/recipes/nginx/conf.d:rw"
           - "{{ tandoor_data_directory }}/mediafiles:/opt/recipes/mediafiles:rw"
-        links:
-          - "{{ tandoor_db_container_name }}:{{ tandoor_db_container_name }}"
-        env:
-          POSTGRES_HOST: "{{ tandoor_db_container_name }}"
-          POSTGRES_PORT: "5432"
-          POSTGRES_USER: "{{ tandoor_db_user }}"
-          POSTGRES_PASSWORD: "{{ tandoor_db_password }}"
-          POSTGRES_DB: "{{ tandoor_db_name }}"
-          SECRET_KEY: "{{ tandoor_secret_key }}"
-          DEBUG: "{{ tandoor_debug }}"
-          ALLOWED_HOSTS: "{{ tandoor_allowed_hosts }}"
-          DB_ENGINE: "django.db.backends.postgresql"
-          GUNICORN_MEDIA: "0"
-          TZ: "{{ ansible_nas_timezone }}"
-          LANGUAGE_CODE: "{{ tandoor_language_code }}"
-          SOCIAL_PROVIDERS: "allauth.socialaccount.providers.openid_connect"
-          SOCIALACCOUNT_PROVIDERS: "{{ tandoor_socialaccount_providers | string }}"
-        restart_policy: unless-stopped
-        memory: "{{ tandoor_web_memory }}"
-
-    - name: Tandoor Nginx Docker Container
-      community.docker.docker_container:
-        name: "{{ tandoor_nginx_container_name }}"
-        image: "{{ tandoor_nginx_image_name }}:{{ tandoor_nginx_image_version }}"
-        pull: true
-        user: "{{ tandoor_user_id }}:{{ tandoor_group_id }}"
+        networks:
+          - name: "{{ tandoor_network_name }}"
         ports:
           - "{{ tandoor_port }}:80"
-        volumes:
-          - "{{ tandoor_nginx_config_volume_name }}:/etc/nginx/conf.d:ro"
-          - "{{ tandoor_staticfiles_volume_name }}:/static:ro"
-          - "{{ tandoor_data_directory }}/mediafiles:/media:ro"
-          - "{{ tandoor_data_directory }}/nginx-temp:/var/cache/nginx:rw"
-          - "{{ tandoor_data_directory }}/nginx-run:/run:rw"
-        links:
-          - "{{ tandoor_web_container_name }}:web_recipes"
         env:
           POSTGRES_HOST: "{{ tandoor_db_container_name }}"
           POSTGRES_PORT: "5432"
@@ -102,13 +97,8 @@
           DEBUG: "{{ tandoor_debug }}"
           ALLOWED_HOSTS: "{{ tandoor_allowed_hosts }}"
           DB_ENGINE: "django.db.backends.postgresql"
-          GUNICORN_MEDIA: "0"
           TZ: "{{ ansible_nas_timezone }}"
           LANGUAGE_CODE: "{{ tandoor_language_code }}"
-          SOCIAL_PROVIDERS: "allauth.socialaccount.providers.openid_connect"
-          SOCIALACCOUNT_PROVIDERS: "{{ tandoor_socialaccount_providers | string }}"
-        restart_policy: unless-stopped
-        memory: "{{ tandoor_nginx_memory }}"
         labels:
           traefik.enable: "{{ tandoor_available_externally | string }}"
           traefik.http.routers.tandoor.rule: "Host(`{{ tandoor_hostname }}.{{ ansible_nas_domain }}`)"
@@ -120,14 +110,12 @@
           homepage.icon: "tandoor-recipes.png"
           homepage.description: "Recipe Manager"
           homepage.href: "{% if tandoor_available_externally %}https://{{ tandoor_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ tandoor_port }}{% endif %}"
+        restart_policy: unless-stopped
+        memory: "{{ tandoor_web_memory }}"
+  when: tandoor_enabled
 
 - name: Stop Tandoor
   block:
-    - name: Stop Tandoor Nginx
-      community.docker.docker_container:
-        name: "{{ tandoor_nginx_container_name }}"
-        state: absent
-
     - name: Stop Tandoor Web
       community.docker.docker_container:
         name: "{{ tandoor_web_container_name }}"
@@ -136,5 +124,10 @@
     - name: Stop Tandoor DB
       community.docker.docker_container:
         name: "{{ tandoor_db_container_name }}"
+        state: absent
+
+    - name: Remove Tandoor Docker Network
+      community.docker.docker_network:
+        name: "{{ tandoor_network_name }}"
         state: absent
   when: not tandoor_enabled
