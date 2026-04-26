@@ -69,18 +69,29 @@
         memory: "{{ immich_server_memory }}"
         networks:
           - name: "{{ immich_network_name }}"   
-        labels:
-          traefik.enable: "{{ immich_available_externally | string }}"
-          traefik.http.routers.immich.rule: "Host(`{{ immich_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.immich.tls.certresolver: "letsencrypt"
-          traefik.http.routers.immich.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.immich.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.immich.loadbalancer.server.port: "2283"
-          homepage.group: Media
-          homepage.name: Immich
-          homepage.icon: immich.png
-          homepage.href: "{% if immich_available_externally %}https://{{ immich_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ immich_port }}{% endif %}"
-          homepage.description: Photo & video management
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.immich-local.rule": "Host(`" + immich_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.immich-local.entrypoints": "websecure",
+              "traefik.http.routers.immich-local.tls": "true",
+              "traefik.http.services.immich.loadbalancer.server.port": "2283",
+              "homepage.group": "Media",
+              "homepage.name": "Immich",
+              "homepage.icon": "immich.png",
+              "homepage.href": ("https://" + immich_hostname + "." + ansible_nas_domain) if immich_available_externally else ("https://" + immich_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Photo & video management"
+            } | combine(
+              {
+                "traefik.http.routers.immich.rule": "Host(`" + immich_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.immich.entrypoints": "websecure",
+                "traefik.http.routers.immich.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.immich.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.immich.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if immich_available_externally else {}
+            )
+          }}
 
     - name: Immich Machine Learning Docker container
       community.docker.docker_container:

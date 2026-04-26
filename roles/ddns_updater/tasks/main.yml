@@ -38,18 +38,29 @@
         restart_policy: unless-stopped
         restart: "{{ ddns_updater_config is changed }}"
         memory: "{{ ddns_updater_memory }}"
-        labels:
-          traefik.enable: "{{ ddns_updater_available_externally | string }}"
-          traefik.http.routers.airsonic.rule: "Host(`{{ ddns_updater_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.airsonic.tls.certresolver: "letsencrypt"
-          traefik.http.routers.airsonic.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.airsonic.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.airsonic.loadbalancer.server.port: "8000"
-          homepage.group: "Networking"
-          homepage.name: "DDNS Updater"
-          homepage.icon: "ddns-updater.png"
-          homepage.description: "Dynamic DNS updater"
-          homepage.href: "{% if ddns_updater_available_externally %}https://{{ ddns_updater_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ ddns_updater_port }}{% endif %}"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.ddns-updater-local.rule": "Host(`" + ddns_updater_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.ddns-updater-local.entrypoints": "websecure",
+              "traefik.http.routers.ddns-updater-local.tls": "true",
+              "traefik.http.services.ddns-updater.loadbalancer.server.port": "8000",
+              "homepage.group": "Networking",
+              "homepage.name": "DDNS Updater",
+              "homepage.icon": "ddns-updater.png",
+              "homepage.description": "Dynamic DNS updater",
+              "homepage.href": ("https://" + ddns_updater_hostname + "." + ansible_nas_domain) if ddns_updater_available_externally else ("https://" + ddns_updater_hostname + "." + ansible_nas_local_domain)
+            } | combine(
+              {
+                "traefik.http.routers.ddns-updater.rule": "Host(`" + ddns_updater_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.ddns-updater.entrypoints": "websecure",
+                "traefik.http.routers.ddns-updater.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.ddns-updater.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.ddns-updater.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if ddns_updater_available_externally else {}
+            )
+          }}
   when: ddns_updater_enabled is true
 
 - name: Stop DDNS Updater

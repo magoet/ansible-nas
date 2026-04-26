@@ -69,9 +69,9 @@
           MYSQL_DATABASE: "nextcloud"
           MYSQL_USER: "{{ nextcloud_sql_user }}"
           MYSQL_PASSWORD: "{{ nextcloud_sql_password }}"
-          NEXTCLOUD_TRUSTED_DOMAINS: "{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
+          NEXTCLOUD_TRUSTED_DOMAINS: "{{ nextcloud_hostname }}.{{ ansible_nas_domain }} {{ nextcloud_hostname }}.{{ ansible_nas_local_domain }}"
           OVERWRITEPROTOCOL: "https"
-          OVERWRITECLIURL: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
+          OVERWRITECLIURL: "{{ ('https://' + nextcloud_hostname + '.' + ansible_nas_domain) if nextcloud_available_externally else ('https://' + nextcloud_hostname + '.' + ansible_nas_local_domain) }}"
         command: >
           bash -c "getent group ansible-nas || groupadd -g 1000 ansible-nas;
           usermod -a -G ansible-nas www-data;
@@ -79,23 +79,35 @@
         entrypoint: ""
         restart_policy: unless-stopped
         memory: "{{ nextcloud_memory }}"
-        labels:
-          traefik.enable: "{{ nextcloud_available_externally | string }}"
-          traefik.http.routers.nextcloud.rule: "Host(`{{ nextcloud_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.nextcloud.tls.certresolver: "letsencrypt"
-          traefik.http.routers.nextcloud.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.nextcloud.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.nextcloud.loadbalancer.server.port: "80"
-          traefik.http.middlewares.nextcloudHeader.headers.stsSeconds: "15752000"
-          traefik.http.middlewares.nextcloudHeader.headers.stsIncludeSubdomains: "true"
-          traefik.http.middlewares.nextcloudHeader.headers.stsPreload: "true"
-          traefik.http.middlewares.nextcloudHeader.headers.forceSTSHeader: "true"
-          traefik.http.routers.nextcloud.middlewares: "nextcloudHeader"
-          homepage.group: Media
-          homepage.name: Nextcloud
-          homepage.icon: nextcloud.png
-          homepage.href: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
-          homepage.description: Open source dropbox alternative
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.nextcloud-local.rule": "Host(`" + nextcloud_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.nextcloud-local.entrypoints": "websecure",
+              "traefik.http.routers.nextcloud-local.tls": "true",
+              "traefik.http.routers.nextcloud-local.middlewares": "nextcloudHeader",
+              "traefik.http.services.nextcloud.loadbalancer.server.port": "80",
+              "traefik.http.middlewares.nextcloudHeader.headers.stsSeconds": "15752000",
+              "traefik.http.middlewares.nextcloudHeader.headers.stsIncludeSubdomains": "true",
+              "traefik.http.middlewares.nextcloudHeader.headers.stsPreload": "true",
+              "traefik.http.middlewares.nextcloudHeader.headers.forceSTSHeader": "true",
+              "homepage.group": "Media",
+              "homepage.name": "Nextcloud",
+              "homepage.icon": "nextcloud.png",
+              "homepage.href": ("https://" + nextcloud_hostname + "." + ansible_nas_domain) if nextcloud_available_externally else ("https://" + nextcloud_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Open source dropbox alternative"
+            } | combine(
+              {
+                "traefik.http.routers.nextcloud.rule": "Host(`" + nextcloud_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.nextcloud.entrypoints": "websecure",
+                "traefik.http.routers.nextcloud.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.nextcloud.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.nextcloud.tls.domains[0].sans": "*." + ansible_nas_domain,
+                "traefik.http.routers.nextcloud.middlewares": "nextcloudHeader"
+              } if nextcloud_available_externally else {}
+            )
+          }}
          # homepage.widget.type: nextcloud
          # homepage.widget.url: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
   when: nextcloud_enabled is true

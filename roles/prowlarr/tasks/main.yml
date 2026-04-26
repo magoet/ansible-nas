@@ -30,18 +30,29 @@
         networks: 
           - name: "arr"
         network_mode: "arr"
-        labels:
-          traefik.enable: "{{ prowlarr_available_externally | string }}"
-          traefik.http.routers.prowlarr.rule: "Host(`{{ prowlarr_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.prowlarr.tls.certresolver: "letsencrypt"
-          traefik.http.routers.prowlarr.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.prowlarr.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.prowlarr.loadbalancer.server.port: "9696"
-          homepage.group: Download Tools
-          homepage.name: Prowlarr
-          homepage.icon: prowlarr
-          homepage.href: "{% if prowlarr_available_externally %}https://{{ prowlarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ prowlarr_port }}{% endif %}"
-          homepage.description: Indexer Proxy
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.prowlarr-local.rule": "Host(`" + prowlarr_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.prowlarr-local.entrypoints": "websecure",
+              "traefik.http.routers.prowlarr-local.tls": "true",
+              "traefik.http.services.prowlarr.loadbalancer.server.port": "9696",
+              "homepage.group": "Download Tools",
+              "homepage.name": "Prowlarr",
+              "homepage.icon": "prowlarr",
+              "homepage.href": ("https://" + prowlarr_hostname + "." + ansible_nas_domain) if prowlarr_available_externally else ("https://" + prowlarr_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Indexer Proxy"
+            } | combine(
+              {
+                "traefik.http.routers.prowlarr.rule": "Host(`" + prowlarr_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.prowlarr.entrypoints": "websecure",
+                "traefik.http.routers.prowlarr.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.prowlarr.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.prowlarr.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if prowlarr_available_externally else {}
+            )
+          }}
 
   when: prowlarr_enabled is true
 

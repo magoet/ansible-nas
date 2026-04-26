@@ -19,18 +19,29 @@
         restart_policy: unless-stopped
         security_opts: "{{ glances_security_options }}"
         memory: "{{ glances_memory }}"
-        labels:
-          traefik.enable: "{{ glances_available_externally | string }}"
-          traefik.http.routers.glances.rule: "Host(`{{ glances_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.glances.tls.certresolver: "letsencrypt"
-          traefik.http.routers.glances.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.glances.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.glances.loadbalancer.server.port: "61208"
-          homepage.group: "Tools"
-          homepage.name: "Glances"
-          homepage.icon: "glances.png"
-          homepage.href: "{% if glances_available_externally %}https://{{ glances_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ glances_port_one }}{% endif %}"
-          homepage.description: "Real-time system monitoring tool"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.glances-local.rule": "Host(`" + glances_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.glances-local.entrypoints": "websecure",
+              "traefik.http.routers.glances-local.tls": "true",
+              "traefik.http.services.glances.loadbalancer.server.port": "61208",
+              "homepage.group": "Tools",
+              "homepage.name": "Glances",
+              "homepage.icon": "glances.png",
+              "homepage.href": ("https://" + glances_hostname + "." + ansible_nas_domain) if glances_available_externally else ("https://" + glances_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Real-time system monitoring tool"
+            } | combine(
+              {
+                "traefik.http.routers.glances.rule": "Host(`" + glances_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.glances.entrypoints": "websecure",
+                "traefik.http.routers.glances.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.glances.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.glances.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if glances_available_externally else {}
+            )
+          }}
   when: glances_enabled is true
 
 - name: Stop Glances

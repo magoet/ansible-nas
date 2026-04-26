@@ -99,17 +99,29 @@
           DB_ENGINE: "django.db.backends.postgresql"
           TZ: "{{ ansible_nas_timezone }}"
           LANGUAGE_CODE: "{{ tandoor_language_code }}"
-        labels:
-          traefik.enable: "{{ tandoor_available_externally | string }}"
-          traefik.http.routers.tandoor.rule: "Host(`{{ tandoor_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.tandoor.tls.certresolver: "letsencrypt"
-          traefik.http.routers.tandoor.tls: "true"
-          traefik.http.services.tandoor.loadbalancer.server.port: "80"
-          homepage.group: "Home"
-          homepage.name: "Tandoor"
-          homepage.icon: "tandoor-recipes.png"
-          homepage.description: "Recipe Manager"
-          homepage.href: "{% if tandoor_available_externally %}https://{{ tandoor_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ tandoor_port }}{% endif %}"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.tandoor-local.rule": "Host(`" + tandoor_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.tandoor-local.entrypoints": "websecure",
+              "traefik.http.routers.tandoor-local.tls": "true",
+              "traefik.http.services.tandoor.loadbalancer.server.port": "80",
+              "homepage.group": "Home",
+              "homepage.name": "Tandoor",
+              "homepage.icon": "tandoor-recipes.png",
+              "homepage.description": "Recipe Manager",
+              "homepage.href": ("https://" + tandoor_hostname + "." + ansible_nas_domain) if tandoor_available_externally else ("https://" + tandoor_hostname + "." + ansible_nas_local_domain)
+            } | combine(
+              {
+                "traefik.http.routers.tandoor.rule": "Host(`" + tandoor_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.tandoor.entrypoints": "websecure",
+                "traefik.http.routers.tandoor.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.tandoor.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.tandoor.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if tandoor_available_externally else {}
+            )
+          }}
         restart_policy: unless-stopped
         memory: "{{ tandoor_web_memory }}"
   when: tandoor_enabled

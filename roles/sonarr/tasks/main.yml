@@ -32,18 +32,29 @@
         networks: 
           - name: "arr"
         network_mode: "arr"
-        labels:
-          traefik.enable: "{{ sonarr_available_externally | string }}"
-          traefik.http.routers.sonarr.rule: "Host(`{{ sonarr_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.sonarr.tls.certresolver: "letsencrypt"
-          traefik.http.routers.sonarr.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.sonarr.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.sonarr.loadbalancer.server.port: "8989"
-          homepage.group: "Download Tools"
-          homepage.name: "Sonarr"
-          homepage.icon: "sonarr"
-          homepage.description: "TV series manager for Usenet and BitTorrent."
-          homepage.href: "{% if sonarr_available_externally %}https://{{ sonarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ sonarr_port }}{% endif %}"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.sonarr-local.rule": "Host(`" + sonarr_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.sonarr-local.entrypoints": "websecure",
+              "traefik.http.routers.sonarr-local.tls": "true",
+              "traefik.http.services.sonarr.loadbalancer.server.port": "8989",
+              "homepage.group": "Download Tools",
+              "homepage.name": "Sonarr",
+              "homepage.icon": "sonarr",
+              "homepage.description": "TV series manager for Usenet and BitTorrent.",
+              "homepage.href": ("https://" + sonarr_hostname + "." + ansible_nas_domain) if sonarr_available_externally else ("https://" + sonarr_hostname + "." + ansible_nas_local_domain)
+            } | combine(
+              {
+                "traefik.http.routers.sonarr.rule": "Host(`" + sonarr_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.sonarr.entrypoints": "websecure",
+                "traefik.http.routers.sonarr.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.sonarr.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.sonarr.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if sonarr_available_externally else {}
+            )
+          }}
   when: sonarr_enabled is true
 
 - name: Stop Sonarr

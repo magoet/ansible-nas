@@ -73,22 +73,33 @@
           GID: "{{ jellyfin_group_id }}"
         restart_policy: unless-stopped
         memory: "{{ jellyfin_memory }}"
-        labels:
-          traefik.enable: "{{ jellyfin_available_externally | string }}"
-          traefik.http.routers.jellyfin.rule: "Host(`{{ jellyfin_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.jellyfin.tls.certresolver: "letsencrypt"
-          traefik.http.routers.jellyfin.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.jellyfin.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.jellyfin.loadbalancer.server.port: "8096"
-          homepage.group: Media
-          homepage.name: Jellyfin
-          homepage.icon: jellyfin.png
-          homepage.href: "{% if jellyfin_available_externally %}https://{{ jellyfin_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ jellyfin_port }}{% endif %}"
-          homepage.description: Media server
-          homepage.widget.type: jellyfin
-          homepage.widget.url: "{% if jellyfin_available_externally %}https://{{ jellyfin_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ jellyfin_port }}{% endif %}"
-          homepage.widget.enableBlocks: "true"
-          homepage.widget.enableNowPlaying: "true"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.jellyfin-local.rule": "Host(`" + jellyfin_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.jellyfin-local.entrypoints": "websecure",
+              "traefik.http.routers.jellyfin-local.tls": "true",
+              "traefik.http.services.jellyfin.loadbalancer.server.port": "8096",
+              "homepage.group": "Media",
+              "homepage.name": "Jellyfin",
+              "homepage.icon": "jellyfin.png",
+              "homepage.href": ("https://" + jellyfin_hostname + "." + ansible_nas_domain) if jellyfin_available_externally else ("https://" + jellyfin_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Media server",
+              "homepage.widget.type": "jellyfin",
+              "homepage.widget.url": ("https://" + jellyfin_hostname + "." + ansible_nas_domain) if jellyfin_available_externally else ("https://" + jellyfin_hostname + "." + ansible_nas_local_domain),
+              "homepage.widget.enableBlocks": "true",
+              "homepage.widget.enableNowPlaying": "true"
+            } | combine(
+              {
+                "traefik.http.routers.jellyfin.rule": "Host(`" + jellyfin_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.jellyfin.entrypoints": "websecure",
+                "traefik.http.routers.jellyfin.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.jellyfin.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.jellyfin.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if jellyfin_available_externally else {}
+            )
+          }}
   when: jellyfin_enabled is true
 
 - name: Stop jellyfin

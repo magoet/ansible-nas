@@ -72,16 +72,29 @@
       - "{{ ansible_nas_ipv4_address }}:{{ adguard_home_port_quic }}:784/udp"
     restart_policy: unless-stopped
     memory: "{{ adguard_home_memory }}"
-    labels:
-      traefik.enable: "{{ adguard_home_available_externally | string }}"
-      traefik.http.routers.adguard-home.rule: "Host(`{{ adguard_home_container_name }}.{{ ansible_nas_domain }}`)"
-      traefik.http.routers.adguard-home.tls.certresolver: "letsencrypt"
-      traefik.http.services.adguard-home.loadbalancer.server.port: "80"
-      homepage.name: "AdGuard Home"
-      homepage.description: "DNS server"
-      homepage.group: "Networking"
-      homepage.icon: "adguard-home.png"
-      homepage.href: "{% if adguard_home_available_externally %}https://{{ adguard_home_container_name }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ adguard_home_port_http }}{% endif %}"
+    labels: >-
+      {{
+        {
+          "traefik.enable": "true",
+          "traefik.http.routers.adguard-home-local.rule": "Host(`" + adguard_home_container_name + "." + ansible_nas_local_domain + "`)",
+          "traefik.http.routers.adguard-home-local.entrypoints": "websecure",
+          "traefik.http.routers.adguard-home-local.tls": "true",
+          "traefik.http.services.adguard-home.loadbalancer.server.port": "3000",
+          "homepage.name": "AdGuard Home",
+          "homepage.description": "DNS server",
+          "homepage.group": "Networking",
+          "homepage.icon": "adguard-home.png",
+          "homepage.href": ("https://" + adguard_home_container_name + "." + ansible_nas_domain) if adguard_home_available_externally else ("https://" + adguard_home_container_name + "." + ansible_nas_local_domain)
+        } | combine(
+          {
+            "traefik.http.routers.adguard-home.rule": "Host(`" + adguard_home_container_name + "." + ansible_nas_domain + "`)",
+            "traefik.http.routers.adguard-home.entrypoints": "websecure",
+            "traefik.http.routers.adguard-home.tls.certresolver": "letsencrypt",
+            "traefik.http.routers.adguard-home.tls.domains[0].main": ansible_nas_domain,
+            "traefik.http.routers.adguard-home.tls.domains[0].sans": "*." + ansible_nas_domain
+          } if adguard_home_available_externally else {}
+        )
+      }}
   when: adguard_home_enabled
 
 - name: Stop AdGuard Home

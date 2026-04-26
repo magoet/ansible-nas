@@ -29,18 +29,29 @@
         networks:
           - name: "arr"
         network_mode: "arr"
-        labels:
-          traefik.enable: "{{ profilarr_available_externally | string }}"
-          traefik.http.routers.profilarr.rule: "Host(`{{ profilarr_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.profilarr.tls.certresolver: "letsencrypt"
-          traefik.http.routers.profilarr.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.profilarr.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.profilarr.loadbalancer.server.port: "8989"
-          homepage.group: "Download Tools"
-          homepage.name: "profilarr"
-          homepage.icon: "profilarr"
-          homepage.description: "TV series manager for Usenet and BitTorrent."
-          homepage.href: "{% if profilarr_available_externally %}https://{{ profilarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ profilarr_port }}{% endif %}"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.profilarr-local.rule": "Host(`" + profilarr_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.profilarr-local.entrypoints": "websecure",
+              "traefik.http.routers.profilarr-local.tls": "true",
+              "traefik.http.services.profilarr.loadbalancer.server.port": "6868",
+              "homepage.group": "Download Tools",
+              "homepage.name": "profilarr",
+              "homepage.icon": "profilarr",
+              "homepage.description": "TV series manager for Usenet and BitTorrent.",
+              "homepage.href": ("https://" + profilarr_hostname + "." + ansible_nas_domain) if profilarr_available_externally else ("https://" + profilarr_hostname + "." + ansible_nas_local_domain)
+            } | combine(
+              {
+                "traefik.http.routers.profilarr.rule": "Host(`" + profilarr_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.profilarr.entrypoints": "websecure",
+                "traefik.http.routers.profilarr.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.profilarr.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.profilarr.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if profilarr_available_externally else {}
+            )
+          }}
   when: profilarr_enabled is true
 
 - name: Stop profilarr

@@ -32,18 +32,29 @@
         networks: 
           - name: "arr"
         network_mode: "arr"
-        labels:
-          traefik.enable: "{{ radarr_available_externally | string }}"
-          traefik.http.routers.radarr.rule: "Host(`{{ radarr_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.radarr.tls.certresolver: "letsencrypt"
-          traefik.http.routers.radarr.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.radarr.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.radarr.loadbalancer.server.port: "7878"
-          homepage.group: "Download Tools"
-          homepage.name: "Radarr"
-          homepage.icon: "radarr"
-          homepage.description: "Movie manager for Usenet and BitTorrent."
-          homepage.href: "{% if radarr_available_externally %}https://{{ radarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ radarr_port }}{% endif %}"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.radarr-local.rule": "Host(`" + radarr_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.radarr-local.entrypoints": "websecure",
+              "traefik.http.routers.radarr-local.tls": "true",
+              "traefik.http.services.radarr.loadbalancer.server.port": "7878",
+              "homepage.group": "Download Tools",
+              "homepage.name": "Radarr",
+              "homepage.icon": "radarr",
+              "homepage.description": "Movie manager for Usenet and BitTorrent.",
+              "homepage.href": ("https://" + radarr_hostname + "." + ansible_nas_domain) if radarr_available_externally else ("https://" + radarr_hostname + "." + ansible_nas_local_domain)
+            } | combine(
+              {
+                "traefik.http.routers.radarr.rule": "Host(`" + radarr_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.radarr.entrypoints": "websecure",
+                "traefik.http.routers.radarr.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.radarr.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.radarr.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if radarr_available_externally else {}
+            )
+          }}
   when: radarr_enabled is true
 
 - name: Stop Radarr

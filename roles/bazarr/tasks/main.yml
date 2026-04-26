@@ -32,18 +32,29 @@
         networks:
           - name: "arr"
         network_mode: "arr"
-        labels:
-          traefik.enable: "{{ bazarr_available_externally | string }}"
-          traefik.http.routers.bazarr.rule: "Host(`{{ bazarr_hostname }}.{{ ansible_nas_domain }}`)"
-          traefik.http.routers.bazarr.tls.certresolver: "letsencrypt"
-          traefik.http.routers.bazarr.tls.domains[0].main: "{{ ansible_nas_domain }}"
-          traefik.http.routers.bazarr.tls.domains[0].sans: "*.{{ ansible_nas_domain }}"
-          traefik.http.services.bazarr.loadbalancer.server.port: "6767"
-          homepage.group: Download Tools
-          homepage.name: Bazarr
-          homepage.icon: bazarr.png
-          homepage.href: "{% if bazarr_available_externally %}https://{{ bazarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ bazarr_port }}{% endif %}"
-          homepage.description: Manage subtitles
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.bazarr-local.rule": "Host(`" + bazarr_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.bazarr-local.entrypoints": "websecure",
+              "traefik.http.routers.bazarr-local.tls": "true",
+              "traefik.http.services.bazarr.loadbalancer.server.port": "6767",
+              "homepage.group": "Download Tools",
+              "homepage.name": "Bazarr",
+              "homepage.icon": "bazarr.png",
+              "homepage.href": ("https://" + bazarr_hostname + "." + ansible_nas_domain) if bazarr_available_externally else ("https://" + bazarr_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Manage subtitles"
+            } | combine(
+              {
+                "traefik.http.routers.bazarr.rule": "Host(`" + bazarr_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.bazarr.entrypoints": "websecure",
+                "traefik.http.routers.bazarr.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.bazarr.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.bazarr.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if bazarr_available_externally else {}
+            )
+          }}
 #          homepage.widget.type: bazarr
 #         homepage.widget.url: "{% if bazarr_available_externally %}https://{{ bazarr_hostname }}.{{ ansible_nas_domain }}{% else %}http://{{ ansible_nas_hostname }}:{{ bazarr_port }}{% endif %}"
   when: bazarr_enabled is true

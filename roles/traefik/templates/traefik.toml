@@ -8,15 +8,6 @@
   [entryPoints.websecure]
     address = ":{{ traefik_port_https }}"
 
-      [entryPoints.websecure.http.tls]
-        certResolver = "letsencrypt"
-
-        [entryPoints.websecure.http.tls.domains]
-          main = "{{ ansible_nas_domain }}"
-          sans = [
-            "*.{{ ansible_nas_domain }}"
-          ]
-
   [entryPoints.traefik]
     address = ":{{ traefik_port_ui }}"
 
@@ -24,6 +15,8 @@
   providersThrottleDuration = "2s"
   [providers.docker]
     exposedbydefault = false
+  [providers.file]
+    filename = "/etc/traefik/dynamic.toml"
 
 [api]
   insecure = true

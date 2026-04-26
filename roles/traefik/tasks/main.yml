@@ -8,12 +8,71 @@
       with_items:
         - "{{ traefik_data_directory }}"
         - "{{ traefik_data_directory }}/letsencrypt"
+        - "{{ traefik_data_directory }}/certs"
+
+    - name: Generate self-signed CA key
+      community.crypto.openssl_privatekey:
+        path: "{{ traefik_data_directory }}/certs/ca.key"
+        size: 4096
+
+    - name: Generate self-signed CA certificate
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -new -nodes
+          -key {{ traefik_data_directory }}/certs/ca.key
+          -sha256 -days 3650
+          -out {{ traefik_data_directory }}/certs/ca.crt
+          -subj "/CN=Ansible-NAS Local CA"
+        creates: "{{ traefik_data_directory }}/certs/ca.crt"
+
+    - name: Generate wildcard certificate key
+      community.crypto.openssl_privatekey:
+        path: "{{ traefik_data_directory }}/certs/snerver.key"
+        size: 4096
+
+    - name: Generate wildcard certificate CSR
+      ansible.builtin.command:
+        cmd: >
+          openssl req -new
+          -key {{ traefik_data_directory }}/certs/snerver.key
+          -out {{ traefik_data_directory }}/certs/snerver.csr
+          -subj "/CN=*.{{ ansible_nas_local_domain }}"
+          -addext "subjectAltName=DNS:*.{{ ansible_nas_local_domain }},DNS:{{ ansible_nas_local_domain }}"
+        creates: "{{ traefik_data_directory }}/certs/snerver.csr"
+
+    - name: Sign wildcard certificate with CA
+      ansible.builtin.command:
+        cmd: >
+          openssl x509 -req
+          -in {{ traefik_data_directory }}/certs/snerver.csr
+          -CA {{ traefik_data_directory }}/certs/ca.crt
+          -CAkey {{ traefik_data_directory }}/certs/ca.key
+          -CAcreateserial
+          -out {{ traefik_data_directory }}/certs/snerver.crt
+          -days 3650 -sha256
+          -extfile /dev/stdin
+        stdin: "subjectAltName=DNS:*.{{ ansible_nas_local_domain }},DNS:{{ ansible_nas_local_domain }}"
+        creates: "{{ traefik_data_directory }}/certs/snerver.crt"
+
+    - name: Create full-chain certificate
+      ansible.builtin.shell:
+        cmd: >
+          cat {{ traefik_data_directory }}/certs/snerver.crt
+          {{ traefik_data_directory }}/certs/ca.crt
+          > {{ traefik_data_directory }}/certs/snerver-fullchain.crt
+        creates: "{{ traefik_data_directory }}/certs/snerver-fullchain.crt"
 
     - name: Template Traefik config.toml
       ansible.builtin.template:
         src: traefik.toml
         dest: "{{ traefik_data_directory }}/traefik.toml"
       register: template_config
+
+    - name: Template Traefik dynamic.toml
+      ansible.builtin.template:
+        src: dynamic.toml
+        dest: "{{ traefik_data_directory }}/dynamic.toml"
+      register: template_dynamic
 
     - name: Traefik Docker Container
       community.docker.docker_container:
@@ -23,12 +82,14 @@
         network_mode: host
         volumes:
           - "{{ traefik_data_directory }}/traefik.toml:/etc/traefik/traefik.toml:ro"
+          - "{{ traefik_data_directory }}/dynamic.toml:/etc/traefik/dynamic.toml:ro"
+          - "{{ traefik_data_directory }}/certs:/certs:ro"
           - "{{ traefik_data_directory }}/letsencrypt:/letsencrypt:rw"
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
         env: "{{ traefik_environment_variables }}"
         restart_policy: unless-stopped
         memory: "{{ traefik_memory }}"
-        recreate: "{{ template_config is changed }}"
+        recreate: "{{ template_config is changed or template_dynamic is changed }}"
         labels:
           homepage.group: Networking
           homepage.name: Traefik
