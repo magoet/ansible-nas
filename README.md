@@ -79,6 +79,7 @@ If you have a spare domain name you can configure applications to be accessible 
 * [Nomad](https://www.nomadproject.io/) - A simple and flexible scheduler and software orchestrator
 * [NZBget](https://nzbget.net/) - The most efficient usenet downloader
 * [Octoprint](https://octoprint.org/) - Control and monitor your 3D printer
+* [OpenClaw](https://docs.openclaw.ai/) - AI gateway with a browser Control UI, deployable with Docker
 * [Ombi](https://ombi.io/) - web application that automatically gives your users the ability to request content
 * [openHAB](https://www.openhab.org/) - A vendor and technology agnostic open source automation software for your home
 * [Organizr](https://organizr.app/) - ORGANIZR aims to be your one stop shop for your Servers Frontend.

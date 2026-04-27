@@ -313,6 +313,10 @@
       tags:
         - ombi
 
+    - role: openclaw
+      tags:
+        - openclaw
+
     - role: openhab
       tags:
         - openhab

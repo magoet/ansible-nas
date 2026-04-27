@@ -1,0 +1,31 @@
+---
+openclaw_enabled: false
+openclaw_available_externally: false
+
+# directories
+openclaw_data_directory: "{{ docker_home }}/openclaw"
+openclaw_config_directory: "{{ openclaw_data_directory }}/config"
+openclaw_workspace_directory: "{{ openclaw_data_directory }}/workspace"
+
+# user/group IDs for file permissions
+openclaw_user_id: "1000"
+openclaw_group_id: "1000"
+
+# network
+openclaw_gateway_port: "18789"
+openclaw_bridge_port: "18790"
+openclaw_hostname: "openclaw"
+
+# docker
+openclaw_container_name: "openclaw-gateway"
+openclaw_image_name: "ghcr.io/openclaw/openclaw"
+openclaw_image_version: "latest"
+
+# specs
+openclaw_memory: 2g
+
+# OpenClaw gateway config
+openclaw_gateway_bind: "lan"
+openclaw_gateway_token: "change_me"
+openclaw_allow_insecure_private_ws: ""
+openclaw_disable_bonjour: "1"

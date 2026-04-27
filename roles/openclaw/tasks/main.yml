@@ -1,0 +1,73 @@
+---
+- name: Start OpenClaw
+  block:
+    - name: Create OpenClaw Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ openclaw_user_id }}"
+        group: "{{ openclaw_group_id }}"
+      with_items:
+        - "{{ openclaw_config_directory }}"
+        - "{{ openclaw_workspace_directory }}"
+
+    - name: OpenClaw Docker Container
+      community.docker.docker_container:
+        name: "{{ openclaw_container_name }}"
+        image: "{{ openclaw_image_name }}:{{ openclaw_image_version }}"
+        pull: true
+        volumes:
+          - "{{ openclaw_config_directory }}:/home/node/.openclaw"
+          - "{{ openclaw_workspace_directory }}:/home/node/.openclaw/workspace"
+        ports:
+          - "{{ openclaw_gateway_port }}:18789"
+          - "{{ openclaw_bridge_port }}:18790"
+        env:
+          HOME: "/home/node"
+          TERM: "xterm-256color"
+          OPENCLAW_GATEWAY_TOKEN: "{{ openclaw_gateway_token }}"
+          OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: "{{ openclaw_allow_insecure_private_ws }}"
+          OPENCLAW_DISABLE_BONJOUR: "{{ openclaw_disable_bonjour }}"
+          TZ: "{{ ansible_nas_timezone }}"
+        command:
+          - "node"
+          - "dist/index.js"
+          - "gateway"
+          - "--bind"
+          - "{{ openclaw_gateway_bind }}"
+          - "--port"
+          - "18789"
+        restart_policy: unless-stopped
+        memory: "{{ openclaw_memory }}"
+        labels: >-
+          {{
+            {
+              "traefik.enable": "true",
+              "traefik.http.routers.openclaw-local.rule": "Host(`" + openclaw_hostname + "." + ansible_nas_local_domain + "`)",
+              "traefik.http.routers.openclaw-local.entrypoints": "websecure",
+              "traefik.http.routers.openclaw-local.tls": "true",
+              "traefik.http.services.openclaw.loadbalancer.server.port": "18789",
+              "homepage.group": "Development",
+              "homepage.name": "OpenClaw",
+              "homepage.icon": "openclaw",
+              "homepage.href": ("https://" + openclaw_hostname + "." + ansible_nas_domain) if openclaw_available_externally else ("https://" + openclaw_hostname + "." + ansible_nas_local_domain),
+              "homepage.description": "Cloud development workspace"
+            } | combine(
+              {
+                "traefik.http.routers.openclaw.rule": "Host(`" + openclaw_hostname + "." + ansible_nas_domain + "`)",
+                "traefik.http.routers.openclaw.entrypoints": "websecure",
+                "traefik.http.routers.openclaw.tls.certresolver": "letsencrypt",
+                "traefik.http.routers.openclaw.tls.domains[0].main": ansible_nas_domain,
+                "traefik.http.routers.openclaw.tls.domains[0].sans": "*." + ansible_nas_domain
+              } if openclaw_available_externally else {}
+            )
+          }}
+  when: openclaw_enabled is true
+
+- name: Stop OpenClaw
+  block:
+    - name: Stop OpenClaw
+      community.docker.docker_container:
+        name: "{{ openclaw_container_name }}"
+        state: absent
+  when: openclaw_enabled is false
