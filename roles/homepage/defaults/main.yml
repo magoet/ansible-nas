@@ -55,6 +55,16 @@ homepage_settings_yaml:
       style: row
       columns: 4
       useEqualHeights: true
+    Home:
+      tab: Snerver
+      style: row
+      columns: 4
+      useEqualHeights: true
+    Monitoring:
+      tab: Snerver
+      style: row
+      columns: 3
+      useEqualHeights: true
 
 homepage_services_yaml:
   - Networking:
@@ -66,24 +76,40 @@ homepage_services_yaml:
             type: fritzbox
             url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] }}"
             fields: ["connectionStatus", "upTime", "maxDown", "maxUp", "down", "up", "received", "sent", "externalIPAddress"]
+      - Proxmox:
+          icon: proxmox
+          href: "https://proxmox:8006"
+          description: Hypervisor
+          widget:
+            type: proxmox
+            url: "https://proxmox:8006"
+  - Home:
+      - Home Assistant:
+          icon: home-assistant
+          href: "http://homeassistant:8123"
+          description: Home Automation
+          widget:
+            type: homeassistant
+            url: "http://homeassistant:8123"
+            key: "{{ homeassistant_homepage_access_token }}"
   - Monitoring:
       - Info:
           widget:
             type: glances
-            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
+            url: "http://host.docker.internal:{{ glances_port_one }}"
             version: 4 # required only if running glances v4 or higher, defaults to 3
             metric: info
       - CPU Usage:
           widget:
             type: glances
-            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
+            url: "http://host.docker.internal:{{ glances_port_one }}"
             version: 4 # required only if running glances v4 or higher, defaults to 3
             metric: cpu
       - Memory Usage:
           widget:
             type: glances
-            url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ glances_port_one }}"
-            version: 4 # required only if running glances v4 or higher, defaults to 3
+            url: "http://host.docker.internal:{{ glances_port_one }}"
+            version: 4
             metric: memory
 
   # - Test Iframe:
@@ -109,22 +135,21 @@ homepage_widgets_yaml:
       #showSearchSuggestions: true
       focus: true # Optional, will set focus to the search bar on page load
       target: _blank # One of _self, _blank, _parent or _top
-  # - greeting:
-  #     text_size: xl
-  #     text: Snerver
-  # - resources:
-  #     cpu: true
-  #     memory: true
-  #     cputemp: true
-  #     uptime: true
-  #     units: metric # only used by cpu temp
-  #     refresh: 60000 # optional, in ms
-  # - datetime:
-  #   text_size: xl
-  #   locale: "{{ homepage_locale }}"
-  #   format:
-  #     timeStyle: short
-  #     hourCycle: h23
+  - resources:
+      cpu: true
+      memory: true
+      uptime: true
+      units: metric
+      refresh: 3000
+      disk:
+        - /mnt
+        - /mnt/storage
+  - datetime:
+      text_size: xl
+      locale: "{{ homepage_locale }}"
+      format:
+        timeStyle: short
+        hourCycle: h23
   - openmeteo:
       latitude: "{{ ansible_nas_latitude }}"
       longitude: "{{ ansible_nas_longitude }}"

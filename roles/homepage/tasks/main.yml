@@ -28,11 +28,14 @@
         volumes:
           - "{{ homepage_data_directory }}:/app/config"
           - "/var/run/docker.sock:/var/run/docker.sock"
+          - "/mnt:/mnt:ro"
         env:
           TZ: "{{ ansible_nas_timezone }}"
           HOMEPAGE_ALLOWED_HOSTS: "{{ homepage_hostname }}.{{ ansible_nas_domain }},{{ homepage_hostname }}.{{ ansible_nas_local_domain }},{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ homepage_port }},{{ ansible_nas_hostname }}:{{ homepage_port }}"
         ports:
           - "{{ homepage_port }}:3000"
+        etc_hosts:
+          host.docker.internal: host-gateway
         restart_policy: unless-stopped
         restart: "{{ homepage_config is changed }}"
         memory: "{{ homepage_memory }}"

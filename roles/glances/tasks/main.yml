@@ -27,7 +27,7 @@
               "traefik.http.routers.glances-local.entrypoints": "websecure",
               "traefik.http.routers.glances-local.tls": "true",
               "traefik.http.services.glances.loadbalancer.server.port": "61208",
-              "homepage.group": "Tools",
+              "homepage.group": "Monitoring",
               "homepage.name": "Glances",
               "homepage.icon": "glances.png",
               "homepage.href": ("https://" + glances_hostname + "." + ansible_nas_domain) if glances_available_externally else ("https://" + glances_hostname + "." + ansible_nas_local_domain),
