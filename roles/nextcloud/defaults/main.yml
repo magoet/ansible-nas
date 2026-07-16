@@ -22,3 +22,7 @@ nextcloud_db_image_version: "8.3"
 # specs
 nextcloud_memory: 2g
 nextcloud_db_memory: 2g
+
+# How often (in minutes) to rescan external storage mounts (e.g. Samba shares)
+# for changes made outside Nextcloud. Set to 0 to disable the cron job.
+nextcloud_external_storage_scan_minutes: 15

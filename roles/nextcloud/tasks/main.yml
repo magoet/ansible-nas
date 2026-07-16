@@ -115,6 +115,20 @@
           }}
          # homepage.widget.type: nextcloud
          # homepage.widget.url: "https://{{ nextcloud_hostname }}.{{ ansible_nas_domain }}"
+
+    - name: "Schedule a periodic rescan of external storage mounts (e.g. Samba shares) so changes made outside Nextcloud become visible"
+      ansible.builtin.cron:
+        name: nextcloud-external-storage-scan
+        minute: "*/{{ nextcloud_external_storage_scan_minutes }}"
+        user: root
+        job: "docker exec --user www-data {{ nextcloud_container_name }} php occ files_external:scan --all >/dev/null 2>&1"
+      when: nextcloud_external_storage_scan_minutes | int > 0
+
+    - name: "Remove the external storage rescan cronjob if disabled"
+      ansible.builtin.cron:
+        name: nextcloud-external-storage-scan
+        state: absent
+      when: nextcloud_external_storage_scan_minutes | int <= 0
   when: nextcloud_enabled is true
 
 - name: Stop Nextcloud
@@ -132,4 +146,8 @@
         name: www-data
         groups: ""
         append: no
+    - name: "Remove the external storage rescan cronjob when Nextcloud is disabled"
+      ansible.builtin.cron:
+        name: nextcloud-external-storage-scan
+        state: absent
   when: nextcloud_enabled is false

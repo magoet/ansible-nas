@@ -42,3 +42,13 @@ To (re)apply correct ownership/permissions to existing data (e.g. after enabling
 ```bash
 $ ansible-playbook permission_data.yml -e "permission_target=photos"
 ```
+
+## Detecting changes made outside Nextcloud (Samba)
+
+Nextcloud does not watch the filesystem for changes made directly on a share (e.g. via Samba). It only rescans a folder lazily, when a client actually browses it. To pick up out-of-band changes reliably, the role schedules a cron job on the host that rescans all external storage mounts:
+
+```bash
+docker exec --user www-data nextcloud php occ files_external:scan --all
+```
+
+This runs every `nextcloud_external_storage_scan_minutes` (default: `15`) minutes, independently of any `cron.php`/background-job cron you've already set up for Nextcloud itself - that one only runs Nextcloud's internal job queue and does **not** rescan external storage. Set `nextcloud_external_storage_scan_minutes: 0` to disable this cron job (e.g. if you'd rather scan specific mounts individually via `occ files_external:scan <mount_id>` or rely on `occ files_external:notify` for SMB-backed mounts).
