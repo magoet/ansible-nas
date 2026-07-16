@@ -45,10 +45,16 @@ $ ansible-playbook permission_data.yml -e "permission_target=photos"
 
 ## Detecting changes made outside Nextcloud (Samba)
 
-Nextcloud does not watch the filesystem for changes made directly on a share (e.g. via Samba). It only rescans a folder lazily, when a client actually browses it. To pick up out-of-band changes reliably, the role schedules a cron job on the host that rescans all external storage mounts:
+Nextcloud does not watch the filesystem for changes made directly on a share (e.g. via Samba). It only rescans a folder lazily, when a client actually browses it. If you need out-of-band changes picked up reliably, the role can schedule a cron job on the host that rescans all external storage mounts:
 
 ```bash
 docker exec --user www-data nextcloud php occ files_external:scan --all
 ```
 
-This runs every `nextcloud_external_storage_scan_minutes` (default: `15`) minutes, independently of any `cron.php`/background-job cron you've already set up for Nextcloud itself - that one only runs Nextcloud's internal job queue and does **not** rescan external storage. Set `nextcloud_external_storage_scan_minutes: 0` to disable this cron job (e.g. if you'd rather scan specific mounts individually via `occ files_external:scan <mount_id>` or rely on `occ files_external:notify` for SMB-backed mounts).
+This is **disabled by default** (`nextcloud_external_storage_scan_minutes: 0`). Even an "unchanged" scan has to `stat()` every directory in the tree to know nothing changed, which can spin up drives configured to spin down for power saving/noise/wear - so this trades drive spin-down against Nextcloud freshness. If you don't mind the spin-ups, set `nextcloud_external_storage_scan_minutes` to a positive number (e.g. `60`) to enable the cron job; it runs independently of any `cron.php`/background-job cron you've already set up for Nextcloud itself, which only runs Nextcloud's internal job queue and does **not** rescan external storage.
+
+With the scan disabled, pick one of these instead when you add/change files via Samba:
+
+* Browse the affected folder in the Nextcloud web UI, sync client, or mobile app - this triggers Nextcloud's normal lazy per-folder rescan.
+* Run a scan manually on demand: `docker exec --user www-data nextcloud php occ files_external:scan --all` (or `occ files_external:scan <mount_id>` for a single mount, found via `occ files_external:list`).
+* For SMB/CIFS-backed mounts specifically, `occ files_external:notify <mount_id>` can react to server-side change events instead of polling - not applicable here since these shares are mounted as local storage.

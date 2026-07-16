@@ -24,5 +24,9 @@ nextcloud_memory: 2g
 nextcloud_db_memory: 2g
 
 # How often (in minutes) to rescan external storage mounts (e.g. Samba shares)
-# for changes made outside Nextcloud. Set to 0 to disable the cron job.
-nextcloud_external_storage_scan_minutes: 15
+# for changes made outside Nextcloud. Disabled (0) by default because even an
+# "unchanged" scan has to stat() every directory in the tree, which can spin
+# up drives configured to spin down for power saving. Set this to a positive
+# number (e.g. 60) to enable periodic scanning, or trigger scans manually/on
+# demand instead - see the Nextcloud docs page for details.
+nextcloud_external_storage_scan_minutes: 0
