@@ -181,3 +181,5 @@ homepage_bookmarks_yaml:
           - abbr: YT
             href: https://youtube.com/
             icon: youtube
+
+homepage_allowed_hosts: "{{ homepage_hostname }}.{{ ansible_nas_domain }},{{ homepage_hostname }}.{{ ansible_nas_local_domain }},{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ homepage_port }},{{ ansible_nas_hostname }}:{{ homepage_port }}"
