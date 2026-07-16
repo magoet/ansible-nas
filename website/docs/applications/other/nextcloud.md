@@ -25,3 +25,20 @@ The above commands are documented in the administration guide for Nextcloud:
 * [set array values](https://docs.nextcloud.com/server/14/admin_manual/configuration_server/occ_command.html#setting-an-array-configuration-value)
 
 * [docker container docs, references environment variables](https://github.com/nextcloud/docker)
+
+## File permissions on local/external storage
+
+Nextcloud runs in its container as `www-data`. The role now creates the `ansible-nas` group with the same GID as on the host and adds `www-data` to it, and marks `nextcloud_data_directory/nextcloud` and every share mounted under `/external_storage/<name>` as setgid (`g+s`), so new files/folders that Nextcloud (or Samba, or any other app) creates automatically inherit the `ansible-nas` group instead of reverting to `www-data` or a mismatched GID.
+
+If you still can't write to Nextcloud-created files from Samba or another app in the `ansible-nas` group, it's usually because Apache's default `umask` (022) strips the group-write bit off newly created files. Fix it once with:
+
+```bash
+$ docker exec -it --user www-data nextcloud /bin/bash
+$ php occ config:system:set localstorage.umask --type=integer --value=2
+```
+
+To (re)apply correct ownership/permissions to existing data (e.g. after enabling local/external storage for the first time), run the repermission playbook from the repo root, optionally scoped to a single share:
+
+```bash
+$ ansible-playbook permission_data.yml -e "permission_target=photos"
+```

@@ -9,6 +9,13 @@
         - "{{ nextcloud_data_directory }}/nextcloud"
         - "{{ nextcloud_data_directory }}/mysql"
 
+    - name: Ensure the Nextcloud data directory is setgid so new uploads inherit the ansible-nas group
+      ansible.builtin.file:
+        path: "{{ nextcloud_data_directory }}/nextcloud"
+        state: directory
+        group: ansible-nas
+        mode: "u=rwx,g=rwxs,o=rx"
+
     - name: Create Nextcloud network
       community.docker.docker_network:
         name: "{{ nextcloud_network_name }}"
@@ -18,6 +25,11 @@
         name: www-data
         groups: ansible-nas
         append: yes
+
+    - name: Look up the host's ansible-nas group GID
+      ansible.builtin.getent:
+        database: group
+        key: ansible-nas
 
     - name: Prepare all Nextcloud volumes
       ansible.builtin.set_fact:
@@ -73,7 +85,7 @@
           OVERWRITEPROTOCOL: "https"
           OVERWRITECLIURL: "{{ ('https://' + nextcloud_hostname + '.' + ansible_nas_domain) if nextcloud_available_externally else ('https://' + nextcloud_hostname + '.' + ansible_nas_local_domain) }}"
         command: >
-          bash -c "getent group ansible-nas || groupadd -g 1000 ansible-nas;
+          bash -c "getent group ansible-nas || groupadd -g {{ ansible_facts.getent_group['ansible-nas'][1] }} ansible-nas;
           usermod -a -G ansible-nas www-data;
           /entrypoint.sh apache2-foreground"
         entrypoint: ""

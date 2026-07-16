@@ -1,20 +1,69 @@
 ---
+# This playbook (re)applies ownership and permissions to your share data.
+#
+# It uses native find/chown/chmod instead of ansible.builtin.file's Python-based
+# recursion, which is dramatically faster on large media libraries and, unlike
+# the old approach, sets the setgid bit on directories so newly created files
+# and folders (e.g. written by Nextcloud, Samba, or any other app running as a
+# different user) keep inheriting the ansible-nas group automatically instead
+# of reverting to the wrong owner/group over time.
+#
+# By default it repermissions every share in samba_shares. To target a single
+# share (much faster when you only need to fix one), run:
+#   ansible-playbook permission_data.yml -e "permission_target=movies"
 - name: Permission Data
   hosts: all
+  become: true
+  vars:
+    permission_target: "all"
+
   tasks:
+    - name: Look up the host's ansible-nas group GID
+      ansible.builtin.getent:
+        database: group
+        key: ansible-nas
+
+    - name: Build the list of shares to repermission
+      ansible.builtin.set_fact:
+        permission_shares: "{{ samba_shares if permission_target == 'all' else (samba_shares | selectattr('name', 'equalto', permission_target) | list) }}"
+
+    - name: Fail fast if the requested share doesn't exist
+      ansible.builtin.fail:
+        msg: "No share named '{{ permission_target }}' found in samba_shares."
+      when: permission_shares | length == 0
+
     - name: Warning!
       ansible.builtin.debug:
-        msg: "This playbook will repermission ALL existing data in the shares defined in group_vars/all.yml to be owned by the ansible-nas user and group. If this is not what you want, exit now."
+        msg: >-
+          This will repermission {{ permission_shares | map(attribute='name') | join(', ') }}
+          to be owned by ansible-nas:ansible-nas (GID {{ ansible_facts.getent_group['ansible-nas'][1] }}),
+          make directories group-writable + setgid, and make files group-writable.
+          Safe to re-run; only touches entries that need it. Ctrl+C now to abort.
 
-    - name: 20s to change your mind...
+    - name: 10s to change your mind...
       ansible.builtin.pause:
-        seconds: 20
+        seconds: 10
 
-    - name: "Permission share data"
-      ansible.builtin.file:
-        path: "{{ item.path }}"
-        owner: ansible-nas
-        group: ansible-nas
-        mode: "u=rwX,g=rwX,o=rX"
-        recurse: true
-      loop: "{{ samba_shares }}"
+    - name: "Fix ownership (only touches files/dirs not already owned by ansible-nas:ansible-nas)"
+      ansible.builtin.shell: >
+        find {{ item.path | quote }} \( ! -user ansible-nas -o ! -group ansible-nas \) -exec chown -h ansible-nas:ansible-nas {} +
+      loop: "{{ permission_shares }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: true
+
+    - name: "Make directories group read/write/execute and setgid, so new content inherits the group"
+      ansible.builtin.shell: >
+        find {{ item.path | quote }} -type d ! -perm -2770 -exec chmod 2775 {} +
+      loop: "{{ permission_shares }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: true
+
+    - name: "Make files group read/write (preserving execute bits already set)"
+      ansible.builtin.shell: >
+        find {{ item.path | quote }} -type f ! -perm -660 -exec chmod ug+rw,o+r {} +
+      loop: "{{ permission_shares }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: true
