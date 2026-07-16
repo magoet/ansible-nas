@@ -9,13 +9,6 @@
         - "{{ nextcloud_data_directory }}/nextcloud"
         - "{{ nextcloud_data_directory }}/mysql"
 
-    - name: Ensure the Nextcloud data directory is setgid so new uploads inherit the ansible-nas group
-      ansible.builtin.file:
-        path: "{{ nextcloud_data_directory }}/nextcloud"
-        state: directory
-        group: ansible-nas
-        mode: "u=rwx,g=rwxs,o=rx"
-
     - name: Create Nextcloud network
       community.docker.docker_network:
         name: "{{ nextcloud_network_name }}"

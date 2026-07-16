@@ -26,11 +26,11 @@ The above commands are documented in the administration guide for Nextcloud:
 
 * [docker container docs, references environment variables](https://github.com/nextcloud/docker)
 
-## File permissions on local/external storage
+## File permissions on local/external storage (Samba shares)
 
-Nextcloud runs in its container as `www-data`. The role now creates the `ansible-nas` group with the same GID as on the host and adds `www-data` to it, and marks `nextcloud_data_directory/nextcloud` and every share mounted under `/external_storage/<name>` as setgid (`g+s`), so new files/folders that Nextcloud (or Samba, or any other app) creates automatically inherit the `ansible-nas` group instead of reverting to `www-data` or a mismatched GID.
+Every `samba_shares` entry is bind-mounted into the Nextcloud container under `/external_storage/<name>`, and Nextcloud writes to it as `www-data`. The role creates the `ansible-nas` group inside the container with the same GID as on the host and adds `www-data` to it, and `permission_data.yml` marks each share directory setgid (`g+s`), so new files/folders that Nextcloud (or Samba, or any other app) creates under an existing share directory inherit the `ansible-nas` group instead of reverting to `www-data` or a mismatched GID. This does not affect Nextcloud's own internal storage (`nextcloud_data_directory/nextcloud`), only the external storage/share mounts.
 
-If you still can't write to Nextcloud-created files from Samba or another app in the `ansible-nas` group, it's usually because Apache's default `umask` (022) strips the group-write bit off newly created files. Fix it once with:
+If you still can't write to Nextcloud-created files on a share from Samba or another app in the `ansible-nas` group, it's usually because Apache's default `umask` (022) strips the group-write bit off newly created files. Fix it once with:
 
 ```bash
 $ docker exec -it --user www-data nextcloud /bin/bash
