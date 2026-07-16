@@ -19,3 +19,17 @@ By default it repermissions every configured share. To target just one (useful a
 ```bash
 $ ansible-playbook permission_data.yml -e "permission_target=movies"
 ```
+
+Every share also sets `directory_mode: "2775"` and `force_directory_mode: "2775"`. The leading `2` is the setgid bit - without it, Samba's own directory creation can strip the setgid bit that the kernel would otherwise inherit from the parent directory, breaking group ownership inheritance a level or more deep. If you define your own shares (e.g. in a private inventory), make sure to include these two keys on each entry so newly created folders keep inheriting the `ansible-nas` group correctly:
+
+```yaml
+samba_shares:
+  - name: myshare
+    path: "/mnt/Volume3/myshare"
+    guest_ok: yes
+    public: yes
+    writable: yes
+    browseable: yes
+    directory_mode: "2775"
+    force_directory_mode: "2775"
+```

@@ -86,6 +86,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ downloads_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: movies
     comment: "Movies"
@@ -94,6 +96,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ movies_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: tv
     comment: "TV Episodes"
@@ -102,6 +106,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ tv_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: music
     comment: "Music"
@@ -110,6 +116,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ music_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: podcasts
     comment: "Podcasts"
@@ -118,6 +126,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ podcasts_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: dump
     comment: "File dump"
@@ -126,6 +136,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ samba_shares_root }}/dump"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: games
     comment: "Games"
@@ -134,6 +146,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ samba_shares_root }}/games"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: photos
     comment: "Pictures"
@@ -142,6 +156,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ photos_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: books
     comment: "Books"
@@ -150,6 +166,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ books_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: audiobooks
     comment: "Audiobooks"
@@ -158,6 +176,8 @@ samba_shares:
     writable: yes
     browsable: yes
     path: "{{ audiobooks_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: comics
     comment: "Comics"
@@ -166,6 +186,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ comics_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: documents
     comment: "Documents"
@@ -174,6 +196,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ documents_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: code
     comment: "Code"
@@ -182,6 +206,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ code_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
   - name: recordings
     comment: "Recordings"
@@ -190,6 +216,8 @@ samba_shares:
     writable: yes
     browseable: yes
     path: "{{ recordings_root }}"
+    directory_mode: "2775"
+    force_directory_mode: "2775"
 
 ###
 ### NFS
